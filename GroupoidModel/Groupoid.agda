@@ -33,6 +33,12 @@ module _ {l} {l'} where
   gid : (G : Groupoid) (x : GObj G) -> GMorph G x x
   gid G x = id (cat G) x
 
+module _ {l} {l'} (G H : Groupoid {l} {l'}) where
+
+  gcross : Groupoid {l} {l'}
+  gcross = record { cat = cross (cat G) (cat H) ; strct = {!!} ; grpd = {!!} }
+    where open Groupoid
+
 module _ {l1 l1' l2 l2'} where
 
   open Groupoid

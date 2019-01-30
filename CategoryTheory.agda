@@ -25,6 +25,20 @@ record Category {l} {l'} : Set (lsuc (l ⊔ l')) where
     ∘∘    : ∀{i j k l} (f : Morph k l) (g : Morph j k) (h : Morph i j)
           → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
 
+module _ {l} {l'} {l''} {l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) where
+
+  open Category
+
+  cross : Category
+  Obj cross = Obj C × Obj D
+  Morph cross (c , d) (c' , d') = Morph C c c' × Morph D d d'
+  id cross (x , y) = (id C x) , (id D y)
+  _∘_ cross (f , f') (g , g') = _∘_ C f g , _∘_ D f' g'
+  hom-set cross = {!!}
+  id∘ cross f = {!!}
+  ∘id cross f = {!!}
+  ∘∘ cross f g = {!!}
+
 module _ {l} {l'} (C : Category {l} {l'}) where
 
   open Category C
@@ -71,6 +85,16 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
 
   record Functor : Set (l ⊔ l' ⊔ l'' ⊔ l''') where
     constructor MkFunct
+    open Category
+    field
+      _₀ : Obj C → Obj D
+      _₁ : ∀{a b} → Morph C a b → Morph D (_₀ a) (_₀ b)
+      fid : (∀ x → _₁ (id C x) ≡ id D (_₀ x))
+      f∘  : (∀{i j k} (f : Morph C j k) (g : Morph C i j)
+          → _₁ (_∘_ C f g) ≡ _∘_ D (_₁ f) (_₁ g))
+
+  record Functor' : Set (lsuc (l ⊔ l' ⊔ l'' ⊔ l''')) where
+    constructor MkFunct'
     open Category
     field
       _₀ : Obj C → Obj D
@@ -180,6 +204,13 @@ module _ {l} {l'} (C : Category {l} {l'}) where
 
   IdFunctor : Functor C C
   IdFunctor = MkFunct (λ x → x) (λ x → x) (λ _ → refl) (λ _ _ → refl)
+
+  open Category
+
+  ConstFunctor : ∀{dl dl'} (D : Category {dl} {dl'}) (c : Obj C)
+               -> Functor D C
+  ConstFunctor D c =
+    MkFunct (λ _ → c) (λ _ → id C c) (λ _ → refl) λ _ _ → sym $ id∘ C _               
 
 module _ {lc} {lc'} {ld} {ld'} {le} {le'}
   (C : Category {lc} {lc'})

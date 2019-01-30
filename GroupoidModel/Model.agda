@@ -5,7 +5,7 @@ module GroupoidModel.Model where
 
 open import GroupoidModel.Groupoid
 open import GroupoidModel.Basics
-open import GroupoidModel.PiTypes
+-- open import GroupoidModel.PiTypes
 open import Model
 open import CategoryTheory
 open import Cubical.Core.Prelude
@@ -14,6 +14,8 @@ open Model.Model
 open Groupoid
 
 module _ {l} {l'} where
+
+  open import GroupoidModel.Universe {l}
 
   grpdModel : Model
   Conᴹ grpdModel = Groupoid
@@ -55,13 +57,13 @@ module _ {l} {l'} where
   -- ,∘₂ᴹ grpdModel i = {!!}
   -- π₂∘ᴹ grpdModel σ = {!!}
   -- π₂≡ᴹ grpdModel σ i = {!!}
-  -- Uᴹ grpdModel = {!!}
+  Uᴹ grpdModel = ConstFunctor _ _ Gpd
   -- U[]ᴹ grpdModel σᴹ x = {!!}
   -- _[_]'Uᴹ grpdModel x σ = {!!}
   -- []U≡ᴹ grpdModel t σ i = {!!}
   -- Πᴹ grpdModel A B = {!!}
   -- Π[]ᴹ grpdModel A B σ x = {!!}
-  -- Elᴹ grpdModel A = {!!}
+  Elᴹ grpdModel A = ConstFunctor _ _ {!!}
   -- El[]ᴹ grpdModel A σ x = {!!}
   -- lamᴹ grpdModel x = {!!}
   -- appᴹ grpdModel x = {!!}
