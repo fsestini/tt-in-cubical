@@ -21,7 +21,7 @@ id∘ Cat f = {!!}
 ∘∘ Cat f g h = {!!}
 
 GpdCat : Category {lsuc l} {lsuc l}
-Obj GpdCat = Groupoid {l} {l}
+Obj GpdCat = Groupoid {l} -- {l}
 Morph GpdCat G H = Σ (Functor' (cat G) (cat H)) (isIso Cat)
 id GpdCat I₁ = {!!}
 (GpdCat ∘ x) x₁ = {!!}
@@ -30,8 +30,9 @@ id∘ GpdCat f = {!!}
 ∘id GpdCat f = {!!}
 ∘∘ GpdCat f g h = {!!}
 
-Gpd : Groupoid {lsuc l} {lsuc l}
+Gpd : Groupoid {lsuc l} -- {lsuc l}
 Gpd = record { cat = GpdCat ; strct = {!!} ; grpd = {!!} }
 
 incl : Functor GpdCat Grpd
-incl = {!!}
+incl = MkFunct (λ x → x) (λ x → unFunctor' (fst x)) {!!} {!!}
+  where open Functor'

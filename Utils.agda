@@ -12,6 +12,11 @@ _·_ = compPath
 
 ap = cong
 
+cong2 : ∀{ℓ ℓ' ℓ''} {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''}
+      {x y : A} {z w : B} (f : A → B → C) (p : x ≡ y) (q : z ≡ w)
+      → f x z ≡ f y w
+cong2 = {!!}
+
 module _ {l l'} {A : Set l} {B : Set l'} (f : A -> B) where
 
   qinv : Set _
@@ -88,6 +93,9 @@ h-level (suc n) A = (x y : A) → h-level n (x ≡ y)
 h-lev-equiv : ∀{l} {A B : Set l} -> A ≃ B
             -> (n : ℕ) -> h-level n A -> h-level n B
 h-lev-equiv eqv n h = subst (h-level n) (ua eqv) h
+
+postulate
+  propIsSet : ∀{l} (P : Set l) -> isProp P -> isSet P
 
 Σ-level : ∀{l l'} {A : Set l} {B : A -> Set l'}
        -> (n : ℕ)

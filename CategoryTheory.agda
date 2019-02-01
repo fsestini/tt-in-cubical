@@ -25,6 +25,21 @@ record Category {l} {l'} : Set (lsuc (l ⊔ l')) where
     ∘∘    : ∀{i j k l} (f : Morph k l) (g : Morph j k) (h : Morph i j)
           → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
 
+module _ {l} (A : Set l) (aset : isSet A) where
+
+  open Category
+
+  -- discrete category
+  Δ : Category {l} {l}
+  Obj Δ = A
+  Morph Δ a b = a ≡ b
+  id Δ x = refl
+  _∘_ Δ p q = q · p
+  hom-set Δ = propIsSet _ (aset _ _)
+  id∘ Δ f = aset _ _ _ f
+  ∘id Δ f = aset _ _ _ _
+  ∘∘ Δ _ _ _ = aset _ _ _ _
+
 module _ {l} {l'} {l''} {l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) where
 
   open Category
@@ -94,14 +109,22 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
           → _₁ (_∘_ C f g) ≡ _∘_ D (_₁ f) (_₁ g))
 
   record Functor' : Set (lsuc (l ⊔ l' ⊔ l'' ⊔ l''')) where
-    constructor MkFunct'
-    open Category
+    constructor MkFunctor'
     field
-      _₀ : Obj C → Obj D
-      _₁ : ∀{a b} → Morph C a b → Morph D (_₀ a) (_₀ b)
-      fid : (∀ x → _₁ (id C x) ≡ id D (_₀ x))
-      f∘  : (∀{i j k} (f : Morph C j k) (g : Morph C i j)
-          → _₁ (_∘_ C f g) ≡ _∘_ D (_₁ f) (_₁ g))
+      unFunctor' : Functor
+
+  -- record Functor' : Set (lsuc (l ⊔ l' ⊔ l'' ⊔ l''')) where
+  --   constructor MkFunct'
+  --   open Category
+  --   field
+  --     _₀ : Obj C → Obj D
+  --     _₁ : ∀{a b} → Morph C a b → Morph D (_₀ a) (_₀ b)
+  --     fid : (∀ x → _₁ (id C x) ≡ id D (_₀ x))
+  --     f∘  : (∀{i j k} (f : Morph C j k) (g : Morph C i j)
+  --         → _₁ (_∘_ C f g) ≡ _∘_ D (_₁ f) (_₁ g))
+
+  -- fun' : Functor' -> Functor
+  -- fun' (MkFunct' _₀ _₁ fid f∘) = MkFunct _₀ _₁ fid f∘
 
   _⟶_ = Functor
 
@@ -187,6 +210,23 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
             ; hom-set = λ {F} {G} → Σ-subset (Π-set λ x → hom-set) (natrltyIsProp F G)
             }
     where open Category D ; open Functor
+
+module _ {la la' lb lb' lc lc' ld ld'}
+  {A : Category {la} {la'}}
+  {B : Category {lb} {lb'}}
+  {C : Category {lc} {lc'}}
+  {D : Category {ld} {ld'}}
+  (F : Functor A B) (G : Functor C D)
+  where
+
+  open Category
+  open Functor
+
+  cross-fun : Functor (cross A C) (cross B D)
+  _₀ cross-fun (a , c) = (F ₀ $ a) , (G ₀ $ c)
+  _₁ cross-fun (f , g) = (F ₁ $ f) , (G ₁ $ g)
+  fid cross-fun (x , y) = cong2 _,_ (fid F x) (fid G y)
+  f∘ cross-fun (f1 , f2) (g1 , g2) = cong2 _,_ (f∘ F f1 g1) (f∘ G f2 g2)
 
 Sets : ∀{l} → Category
 Sets {l} = record
