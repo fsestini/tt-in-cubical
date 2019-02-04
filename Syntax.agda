@@ -3,6 +3,7 @@
 module Syntax where
 
 open import Cubical.Core.Prelude
+open import Utils
 
 data Con : Set
 data Tms : Con → Con → Set
@@ -23,12 +24,9 @@ _∘aux_ : ∀{Θ Γ Δ} → Tms Θ Δ → Tms Γ Θ → Tms Γ Δ
 ,∘₁aux : ∀{Γ Δ ∇} {τ : Tms Γ Δ} {σ : Tms ∇ Γ} {A : Ty Δ} {t : Tm Γ (A [ τ ]aux)}
        → π₁aux ((τ ,sub t) ∘aux σ) ≡ (τ ∘aux σ)
 
-_[_]'∘aux : ∀{Γ Δ ∇} {A : Ty ∇} {τ : Tms Δ ∇}
-       → Tm Δ (A [ τ ]aux) → (σ : Tms Γ Δ) → Tm Γ (A [ τ ∘aux σ ]aux)
-
 Uaux : ∀{Γ} → Ty Γ
+[]Uaux : ∀{Δ Γ} (σ : Tms Δ Γ) -> (Uaux [ σ ]aux) ≡ Uaux
 Elaux : ∀{Γ} → (A : Tm Γ Uaux) → Ty Γ
-_[_]'Uaux : ∀{Γ Δ} → Tm Δ Uaux → Tms Γ Δ → Tm Γ Uaux
 
 -- π₁βaux : ∀{Γ Δ} {σ : Tms Γ Δ} {A : Ty Δ} {t : Tm Γ (A [ σ ]aux)}
 --        → π₁aux (σ ,sub t) ≡ σ
@@ -52,8 +50,6 @@ data Tms where
   π₁β : ∀{Γ Δ} {σ : Tms Γ Δ} {A : Ty Δ} {t : Tm Γ (A [ σ ]aux)}
       → π₁ (σ , t) ≡ σ
   πη  : ∀{Γ Δ} {A : Ty Δ} {σ : Tms Γ (Δ ,con A)} → (π₁aux σ ,sub π₂aux σ) ≡ σ
-  -- ,∘  : ∀{Γ Δ ∇} {τ : Tms Γ Δ} {σ : Tms ∇ Γ} {A : Ty Δ} {t : Tm Γ (A [ τ ]aux)}
-  --     → (τ , t) ∘ σ ≡ ((τ ∘aux σ) , subst (Tm ∇) [][]aux (t [ σ ]'aux))
   ,∘₁  : ∀{Γ Δ ∇} {τ : Tms Γ Δ} {σ : Tms ∇ Γ} {A : Ty Δ} {t : Tm Γ (A [ τ ]aux)}
        → π₁ ((τ , t) ∘ σ) ≡ (τ ∘aux σ)
 
@@ -83,38 +79,34 @@ data Ty where
 
   El : ∀{Γ} → (A : Tm Γ U) → Ty Γ
   El[] : ∀{Γ Δ} → (A : Tm Γ Uaux) → (σ : Tms Δ Γ)
-       → ((Elaux A) [ σ ]) ≡ Elaux (A [ σ ]'Uaux)
+       → (Elaux A) [ σ ] ≡ Elaux (subst (Tm Δ) ([]Uaux σ) (A [ σ ]'aux))
 
 data Tm where
   _[_]'  : ∀{Γ Δ} {A : Ty Δ} → Tm Δ A → (σ : Tms Γ Δ) → Tm Γ (A [ σ ])
-  _[_]'∘ : ∀{Γ Δ ∇} {A : Ty ∇} {τ : Tms Δ ∇}
-         → Tm Δ (A [ τ ]) → (σ : Tms Γ Δ) → Tm Γ (A [ τ ∘ σ ])
-  _[_]'U : ∀{Γ Δ} → Tm Δ U → (σ : Tms Γ Δ) → Tm Γ U
-  [][]∘ : ∀{Γ Δ ∇} {A : Ty ∇} {τ : Tms Δ ∇}
-         → (t : Tm Δ (A [ τ ])) → (σ : Tms Γ Δ)
-         → PathP (λ i → Tm Γ ([][] {σ = τ} {σ} {A} i)) (t [ σ ]') (t [ σ ]'∘)
-  []U≡  : ∀{Γ Δ} → (t : Tm Δ U) → (σ : Tms Γ Δ)
-        → PathP (λ i → Tm Γ (U[] σ i)) (t [ σ ]') (t [ σ ]'U)
 
   π₂  : ∀{Γ Δ} {A : Ty Δ} → (σ : Tms Γ (Δ , A)) → Tm Γ (A [ π₁ σ ]aux)
-  π₂∘ : ∀{Γ Δ ∇} {A : Ty ∇} → {τ : Tms Δ ∇} → (σ : Tms Γ (Δ ,con (A [ τ ]aux)))
-      → Tm Γ (A [ τ ∘aux π₁aux σ ]aux)
-  π₂≡ : ∀{Γ Δ ∇} {A : Ty ∇} → {τ : Tms Δ ∇} → (σ : Tms Γ (Δ ,con (A [ τ ]aux)))
-      → PathP (λ i → Tm Γ ([][]aux {σ = τ} {π₁aux σ} {A} i)) (π₂aux σ) (π₂∘ σ)
+  -- π₂∘ : ∀{Γ Δ ∇} {A : Ty ∇} → {τ : Tms Δ ∇} → (σ : Tms Γ (Δ ,con (A [ τ ]aux)))
+  --     → Tm Γ (A [ τ ∘aux π₁aux σ ]aux)
+  -- π₂≡ : ∀{Γ Δ ∇} {A : Ty ∇} → {τ : Tms Δ ∇} → (σ : Tms Γ (Δ ,con (A [ τ ]aux)))
+  --     → PathP (λ i → Tm Γ ([][]aux {σ = τ} {π₁aux σ} {A} i)) (π₂aux σ) (π₂∘ σ)
 
   π₂β : ∀{Γ Δ} {σ : Tms Γ Δ} {A : Ty Δ} {t : Tm Γ (A [ σ ]aux)}
       → PathP (λ i → Tm Γ (A [ π₁β {σ = σ} {t = t} i ]aux)) (π₂ (σ , t)) t
 
   ,∘₂  : ∀{Γ Δ ∇} {τ : Tms Γ Δ} {σ : Tms ∇ Γ} {A : Ty Δ} {t : Tm Γ (A [ τ ]aux)}
-       → PathP (λ i → Tm ∇ (A [ ,∘₁aux {τ = τ} {σ} {A} {t} i ]aux))
-           (π₂aux ((τ ,sub t) ∘aux σ))
-           (t [ σ ]'∘aux)
+       → subst (Tm ∇)
+               (cong (λ x → A [ x ]aux) ,∘₁aux · sym [][]aux)
+               (π₂aux ((τ ,sub t) ∘aux σ))
+       ≡ t [ σ ]'aux
 
   -- term constructors
   lam : ∀{Γ} {A : Ty Γ} {B : Ty (Γ , A)} → Tm (Γ , A) B → Tm Γ (Π A B)
   app : ∀{Γ} {A : Ty Γ} {B : Ty (Γ , A)} → Tm Γ (Π A B) → Tm (Γ , A) B
   β   : ∀{Γ} {A : Ty Γ} {B : Ty (Γ , A)} (t : Tm (Γ , A) B) → app (lam t) ≡ t
   η   : ∀{Γ} {A : Ty Γ} {B : Ty (Γ , A)} (f : Tm Γ (Π A B)) → lam (app f) ≡ f
+  
+  -- lam[] : ∀{Δ Γ} {A : Ty Γ} {B : Ty (Γ , A)} (t : Tm (Γ , A) B) (σ : Tms Δ Γ)
+  --       -> (lam t) [ σ ]'aux ≡ subst (Tm Δ) (sym (Π[] A B σ)) (lam (t [ σ ↑ A ]'aux))
 
 _[_]aux = _[_]
 _[_]'aux = _[_]'
@@ -126,11 +118,11 @@ idaux = id _
 _∘aux_ = _∘_
 [][]aux = [][]
 ,∘₁aux = ,∘₁
-_[_]'∘aux = _[_]'∘
 Uaux = U
+[]Uaux = U[]
 Elaux = El
-_[_]'Uaux = _[_]'U
 
 vz = π₂ (id _)
 vs = λ x → x [ wk ]'
-_↑_ {Γ} {Δ} σ A = (σ ∘ wk) , π₂∘ (id (Γ , A [ σ ]aux))
+_↑_ {Γ} {Δ} σ A = (σ ∘ wk) , subst (Tm (Γ , (A [ σ ]aux))) [][] (π₂ (id (Γ , A [ σ ]aux)))
+
