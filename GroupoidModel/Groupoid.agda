@@ -41,6 +41,21 @@ module _ {l} where
     where open Category (cat G)
           gr = (grpd G (gid G x))
 
+module _ {l} (G : Groupoid {l}) where
+
+  open Groupoid
+
+  liftedIsGroupoid : isGroupoid (Lift (cat G))
+  liftedIsGroupoid (MkWrap f) =
+    MkWrap (fst (grpd G f)) ,
+           Wrap-≡ (fst (snd (grpd G f))) ,
+           Wrap-≡ (snd (snd (grpd G f)))
+
+  LiftGrpd : Groupoid {lsuc l}
+  LiftGrpd = record { cat = Lift (cat G)
+                    ; strct = liftStrict (cat G) (strct G)
+                    ; grpd = liftedIsGroupoid }
+
 module _ {l} (A : Set l) (aset : isSet A) where
 
   -- discrete groupoid
@@ -50,11 +65,17 @@ module _ {l} (A : Set l) (aset : isSet A) where
 
 module _ {l} (G H : Groupoid {l}) where
 
+  open Groupoid
+
   gcross : Groupoid {l}
-  gcross = record { cat = cross (cat G) (cat H)
-                  ; strct = {!!}
-                  ; grpd = λ { (f , g) → (fst (grpd G f) , fst (grpd H g)) , {!!} , {!!} }}
-    where open Groupoid
+  cat gcross = cross (cat G) (cat H)
+  strct gcross {a} {b} =
+    level2-is-set (Σ-level 2
+      (set-is-level2 (λ x y → strct G {x} {y})) λ _ →
+       set-is-level2 λ x y → strct H {x} {y}) a b
+  grpd gcross (f , g) = (fst (grpd G f) , fst (grpd H g)) ,
+    ×-≡ (fst (snd (grpd G f))) (fst (snd (grpd H g))) ,
+    ×-≡ (snd (snd (grpd G f))) (snd (snd (grpd H g)))
 
 module _ {l1 l2} where
 
@@ -74,12 +95,29 @@ module _ {l} where
            { Obj = Groupoid {l}
            ; Morph = GrpdFunctor
            ; id = λ G → IdFunctor (cat G)
-           ; _∘_ = λ F G → compFun _ _ _ G F
-           ; id∘ = λ {I} {J} F → Functor-≡ _ _ _ _ refl
-           ; ∘id = λ {I} {J} F → Functor-≡ _ _ _ _ refl
-           ; ∘∘ = λ {I} {J} {K} {L} F G H → Functor-≡ _ _ _ _ refl
+           ; _∘_ = λ F G → compFun G F
+           ; id∘ = λ {I} {J} F → Functor-≡' _ _ _ _ (FunctorEq-refl _ _ F)
+           ; ∘id = λ {I} {J} F → Functor-≡' _ _ _ _ (FunctorEq-refl _ _ F)
+           ; ∘∘ = λ {I} {J} {K} {L} F G H → Functor-≡' _ _ _ _ (FunctorEq-refl _ _ (compFun H (compFun G F)))
            ; hom-set = λ {G} {H} → functIsSet (cat G) (cat H) (strct G)
            }
+
+module _ {l} where
+
+  open Functor
+  open Wrap
+
+  gliftFunctor : Functor (Grpd {l}) (Grpd {lsuc l})
+  (gliftFunctor ₀) G = LiftGrpd G
+  (gliftFunctor ₁) {G} {H} F =
+    MkFunct (λ x → MkWrap ((F ₀) (unWrap x)))
+            (λ f → MkWrap ((F ₁) (unWrap f)))
+            (λ x → Wrap-≡ (fid F (unWrap x)))
+            (λ f g → Wrap-≡ (f∘ F (unWrap f) (unWrap g)))
+  fid gliftFunctor G =
+    Functor-≡' _ _ _ _ (record { eq0 = λ x → refl
+                               ; eq1 = λ f → transpRefl _ _ · transpRefl _ _ })
+  f∘  gliftFunctor = {!!}
 
 substMorph : ∀{l l'} {C : Category {l} {l'}} {a b c : Category.Obj C}
            -> a ≡ b -> Category.Morph C a c -> Category.Morph C b c

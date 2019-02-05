@@ -1,15 +1,35 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module CategoryTheory where
 
-open import Cubical.Core.Glue
-open import Cubical.Basics.Equiv
+-- open import Cubical.Core.Glue
+-- open import Cubical.Basics.Equiv
 open import Utils
 open import Function using (_$_ ; const)
 open import Agda.Primitive
 open import Cubical.Core.Prelude hiding (_∧_ ; _×_)
 -- open import IrrelevantProp
 open import Data.Product
+
+module _ {l} where
+
+  record Wrap (A : Set l) : Set (lsuc l) where
+    constructor MkWrap
+    field
+      unWrap : A
+  open Wrap
+
+  module _ {A : Set l} {x y : A} where
+
+    Wrap-≡ : x ≡ y -> MkWrap x ≡ MkWrap y
+    Wrap-≡ p = ap MkWrap p
+
+    Wrap-≡⁻¹ : MkWrap x ≡ MkWrap y -> x ≡ y
+    Wrap-≡⁻¹ p = ap unWrap p
+
+    Wrap-≡-iso1 : (p : x ≡ y) -> Wrap-≡⁻¹ (Wrap-≡ p) ≡ p
+    Wrap-≡-iso1 _ = refl
+    
+    Wrap-≡-iso2 : (p : MkWrap x ≡ MkWrap y) -> Wrap-≡ (Wrap-≡⁻¹ p) ≡ p
+    Wrap-≡-iso2 _ = refl
 
 record Category {l} {l'} : Set (lsuc (l ⊔ l')) where
   no-eta-equality
@@ -24,7 +44,6 @@ record Category {l} {l'} : Set (lsuc (l ⊔ l')) where
     ∘id   : ∀{i j} (f : Morph i j) → f ∘ id i ≡ f
     ∘∘    : ∀{i j k l} (f : Morph k l) (g : Morph j k) (h : Morph i j)
           → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
-
 module _ {l} (A : Set l) (aset : isSet A) where
 
   open Category
@@ -50,10 +69,10 @@ module _ {l} {l'} {l''} {l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''
   Morph cross (c , d) (c' , d') = Morph C c c' × Morph D d d'
   id cross (x , y) = (id C x) , (id D y)
   _∘_ cross (f , f') (g , g') = _∘_ C f g , _∘_ D f' g'
-  hom-set cross = {!!}
-  id∘ cross f = {!!}
-  ∘id cross f = {!!}
-  ∘∘ cross f g = {!!}
+  hom-set cross = Σ-set (hom-set C) (λ _ → hom-set D)
+  id∘ cross (f1 , f2) = ×-≡ (id∘ C f1) (id∘ D f2)
+  ∘id cross (f1 , f2) = ×-≡ (∘id C f1) (∘id D f2)
+  ∘∘ cross (f1 , f2) (g1 , g2) (h1 , h2) = ×-≡ (∘∘ C f1 g1 h1) (∘∘ D f2 g2 h2)
 
 module _ {l} {l'} (C : Category {l} {l'}) where
 
@@ -72,19 +91,19 @@ module _ {l} {l'} (C : Category {l} {l'}) where
       sym (id∘ g1) · ap (_∘ g1) (sym (fst h2)) · ∘∘ g2 f g1
     · ap (g2 ∘_) (snd h1) · ∘id g2
 
-  isIsoIsProp : ∀{a b} -> (u : Morph a b) -> isProp (isIso u)
-  isIsoIsProp u = {!!}
+  -- isIsoIsProp : ∀{a b} -> (u : Morph a b) -> isProp (isIso u)
+  -- isIsoIsProp u = {!!}
 
   _≅_ : Obj -> Obj -> Set _
   A ≅ B = Σ (Morph A B) isIso
 
   module _ {A B : Obj} where
 
-    ≅IsSet : isSet (A ≅ B)
-    ≅IsSet = Σ-subset hom-set isIsoIsProp
+    -- ≅IsSet : isSet (A ≅ B)
+    -- ≅IsSet = Σ-subset hom-set isIsoIsProp
 
-    idtoiso : A ≡ B -> A ≅ B
-    idtoiso = J (λ B' p → A ≅ B') (id A , id A , id∘ _ , id∘ _)
+    -- idtoiso : A ≡ B -> A ≅ B
+    -- idtoiso = J (λ B' p → A ≅ B') (id A , id A , id∘ _ , id∘ _)
 
     -- idtoiso-equiv : isEquiv idtoiso -> isSet (A ≡ B)
     -- idtoiso-equiv eqv = subst isSet (ua ({!!} , {!!})) ≅IsSet
@@ -92,8 +111,8 @@ module _ {l} {l'} (C : Category {l} {l'}) where
   isPreCategory : Set _
   isPreCategory = ∀{a b : Obj} → {f g : Morph a b} → isProp (f ≡ g)
 
-  isStrictCategory : Set _
-  isStrictCategory = ∀{a b : Obj} → isProp (a ≡ a)
+  isStrictCategory : Set l
+  isStrictCategory = ∀{a b : Obj} → isProp (a ≡ b)
 
   _ᵒᵖ : Category
   _ᵒᵖ = record
@@ -106,6 +125,30 @@ module _ {l} {l'} (C : Category {l} {l'}) where
           ; ∘id = λ { f → id∘ f }
           ; hom-set = hom-set
           }
+
+
+module _ {l} (C : Category {l} {l}) where
+
+  open Category C
+
+  Lift : Category {lsuc l} {lsuc l}
+  Obj Lift = Wrap {l} Obj
+  Morph Lift (MkWrap x) (MkWrap y) = Wrap (Morph x y)
+  id Lift (MkWrap x) = MkWrap (id x)
+  _∘_ Lift (MkWrap f) (MkWrap g) = MkWrap (f ∘ g)
+  hom-set Lift (MkWrap x) (MkWrap y) p q =
+    let p' = (Wrap-≡⁻¹ p)
+        q' = (Wrap-≡⁻¹ q)
+    in sym (Wrap-≡-iso1 p) · ap Wrap-≡ (hom-set x y p' q') · Wrap-≡-iso2 q
+  id∘ Lift (MkWrap f) = Wrap-≡ (id∘ f)
+  ∘id Lift (MkWrap f) = Wrap-≡ (∘id f)
+  ∘∘ Lift (MkWrap f) (MkWrap g) (MkWrap h) = Wrap-≡ (∘∘ f g h)
+
+  liftStrict : isStrictCategory C -> isStrictCategory Lift
+  liftStrict h {MkWrap a} {MkWrap b} p q =
+    let p' = (Wrap-≡⁻¹ p)
+        q' = (Wrap-≡⁻¹ q)
+    in sym (Wrap-≡-iso1 p) · ap Wrap-≡ (h {a} {b} p' q') · Wrap-≡-iso2 q
 
 module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) where
 
@@ -141,37 +184,45 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
         eq1 : ∀{a b} (f : Morph C a b)
             -> _≡_ {A = Morph D (G0 a) (G0 b)} (subst2 (Morph D) (eq0 a) (eq0 b) (F1 f)) (G1 f)
         
-    Functoriality : (o : ObjPart) -> MorphPart o -> Set _
-    Functoriality F₀ F₁ =
-        (∀ x → F₁ (id C x) ≡ id D (F₀ x))
-      × (∀{i j k} (f : Morph C j k) (g : Morph C i j)
-           → F₁ (_∘_ C f g) ≡ _∘_ D (F₁ f) (F₁ g))
+    -- Functoriality : (o : ObjPart) -> MorphPart o -> Set _
+    -- Functoriality F₀ F₁ =
+    --     (∀ x → F₁ (id C x) ≡ id D (F₀ x))
+    --   × (∀{i j k} (f : Morph C j k) (g : Morph C i j)
+    --        → F₁ (_∘_ C f g) ≡ _∘_ D (F₁ f) (F₁ g))
 
-    functIsProp : (o : ObjPart) -> (m : MorphPart o) -> isProp (Functoriality o m)
-    functIsProp F₀ F₁ = ×-prop (Π-prop (λ x → hom-set D _ _))
-      λ f g → funExt' _ $ λ i → funExt' _ $ λ j → funExt' _ $ λ k → funExt _ $ λ x →
-        funExt _ (λ y → hom-set D _ _ (f x y) (g x y))
+    -- functIsProp : (o : ObjPart) -> (m : MorphPart o) -> isProp (Functoriality o m)
+    -- functIsProp F₀ F₁ = ×-prop (Π-prop (λ x → hom-set D _ _))
+    --   λ f g → funExt' _ $ λ i → funExt' _ $ λ j → funExt' _ $ λ k → funExt _ $ λ x →
+    --     funExt _ (λ y → hom-set D _ _ (f x y) (g x y))
 
-    funct≃Σ : Functor ≃ Σ (Σ ObjPart MorphPart) λ { (o , m) → Functoriality o m }
-    funct≃Σ =
-      isoToEquiv
-        (λ { (MkFunct F₀ F₁ x y) → (F₀ , F₁) , (x , y) })
-        (λ { ((F₀ , F₁) , (x , y)) → MkFunct F₀ F₁ x y })
-        (λ { ((F₀ , F₁) , (x , y)) → refl })
-        (λ { (MkFunct _₀ _₁ fid₁ f∘₁) → refl })
+    -- funct≃Σ : Functor ≃ Σ (Σ ObjPart MorphPart) λ { (o , m) → Functoriality o m }
+    -- funct≃Σ =
+    --   isoToEquiv
+    --     (λ { (MkFunct F₀ F₁ x y) → (F₀ , F₁) , (x , y) })
+    --     (λ { ((F₀ , F₁) , (x , y)) → MkFunct F₀ F₁ x y })
+    --     (λ { ((F₀ , F₁) , (x , y)) → refl })
+    --     (λ { (MkFunct _₀ _₁ fid₁ f∘₁) → refl })
 
-    Functor-≡ : (F G : Functor) -> fst (fst funct≃Σ F) ≡ fst (fst funct≃Σ G) -> F ≡ G
-    Functor-≡ F G h = ≡-on-≃ funct≃Σ (Σ-prop-≡ (λ { (x , y) → functIsProp x y}) h)
+    -- Functor-≡ : (F G : Functor)
+    --           -> fst (fst funct≃Σ F) ≡ fst (fst funct≃Σ G)
+    --           -> F ≡ G
+    -- Functor-≡ F G h = ≡-on-≃ funct≃Σ (Σ-prop-≡ (λ { (x , y) → functIsProp x y}) h)
   
 
     module _ where
       open Functor
       open FunctorEq
 
-      Functor-≡' : (F G : Functor)
-                 -> FunctorEq (F ₀) (F ₁) (G ₀) (G ₁)
-                 -> F ≡ G
-      Functor-≡' F G eq = Functor-≡ F G (Σ-≡ (funExt _ (eq0 eq) , {!!}))
+      postulate
+        Functor-≡' : (F G : Functor)
+                   -> FunctorEq (F ₀) (F ₁) (G ₀) (G ₁)
+                   -> F ≡ G
+      -- Functor-≡' F G eq = Functor-≡ F G (Σ-≡ (funExt _ (eq0 eq) , {!!}))
+
+      FunctorEq-refl : (F : Functor) -> FunctorEq (F ₀) (F ₁) (F ₀) (F ₁)
+      FunctorEq-refl F =
+        record { eq0 = λ x → refl
+               ; eq1 = λ f → transpRefl _ _ · transpRefl _ ((F ₁) f) }
 
       Functor-≡-prop : (F G : Functor)
                      -> ((a b : Obj D) → isProp (Morph D a b))
@@ -180,10 +231,11 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
       Functor-≡-prop F G h p = Functor-≡' F G
         (record { eq0 = λ x → ap (_$ x) p ; eq1 = λ f → h _ _ _ _ })
 
-    functIsSet : isStrictCategory C -> isSet Functor
-    functIsSet k =
-      subst isSet (sym (ua funct≃Σ))
-        (Σ-subset (Σ-set {!!} {!!}) (λ { (o , m) → functIsProp {!!} {!!} }))
+    postulate
+      functIsSet : isStrictCategory C -> isSet Functor
+    -- functIsSet k =
+    --   subst isSet (sym (ua funct≃Σ))
+    --     (Σ-subset (Σ-set {!!} {!!}) (λ { (o , m) → functIsProp {!!} {!!} }))
 
     module _ (F G : Functor) where
       open Functor
@@ -274,9 +326,9 @@ module _ {l} {l'} (C : Category {l} {l'}) where
     MkFunct (λ _ → c) (λ _ → id C c) (λ _ → refl) λ _ _ → sym $ id∘ C _               
 
 module _ {lc} {lc'} {ld} {ld'} {le} {le'}
-  (C : Category {lc} {lc'})
-  (D : Category {ld} {ld'})
-  (E : Category {le} {le'}) where
+  {C : Category {lc} {lc'}}
+  {D : Category {ld} {ld'}}
+  {E : Category {le} {le'}} where
 
   open Functor
   open Category
@@ -285,48 +337,48 @@ module _ {lc} {lc'} {ld} {ld'} {le} {le'}
   _₀ (compFun F G) x = (G ₀) ((F ₀) x)
   _₁ (compFun F G) f = (G ₁) ((F ₁) f)
   fid (compFun F G) x = cong (G ₁) (fid F x) · fid G ((F ₀) x)
-  f∘ (compFun F G) f g = {!!}
+  f∘ (compFun F G) f g = ap (G ₁) (f∘ F f g) · f∘ G (F ₁ $ f) (F ₁ $ g)
 
-module _ {l l' l''} (C : Category {l} {l'}) where
+-- module _ {l l' l''} (C : Category {l} {l'}) where
 
-  open Category C
-  open Functor
+--   open Category C
+--   open Functor
 
-  PSh : Set _
-  PSh = Functor (C ᵒᵖ) (Sets {l''})
+--   PSh : Set _
+--   PSh = Functor (C ᵒᵖ) (Sets {l''})
 
-  PShCat : Category
-  PShCat = [ C ᵒᵖ , Sets {l''} ]
+--   PShCat : Category
+--   PShCat = [ C ᵒᵖ , Sets {l''} ]
 
-  open import Function using (_$_)
+--   open import Function using (_$_)
 
-  module Elements (cStrictCat : isStrictCategory C) where
+--   module Elements (cStrictCat : isStrictCategory C) where
 
-    ∫ : PSh → Category
-    Obj (∫ P) = Σ Obj (λ A → fst ((P ₀) A)) -- Σ Obj (P ₀)
-    Morph (∫ P) (J , γ') (I , γ) = Σ (Morph J I) (λ u → (P ₁) u γ ≡ γ')
-    _∘_ (∫ P) {I} {J} {K} (u , p) (u' , p') =
-      (u ∘ u') , cong (_$ snd K) (f∘ P u' u) · cong ((P ₁) u') p · p'
+--     ∫ : PSh → Category
+--     Obj (∫ P) = Σ Obj (λ A → fst ((P ₀) A)) -- Σ Obj (P ₀)
+--     Morph (∫ P) (J , γ') (I , γ) = Σ (Morph J I) (λ u → (P ₁) u γ ≡ γ')
+--     _∘_ (∫ P) {I} {J} {K} (u , p) (u' , p') =
+--       (u ∘ u') , cong (_$ snd K) (f∘ P u' u) · cong ((P ₁) u') p · p'
 
-    id (∫ P) x = id (fst x) , cong (_$ snd x) (fid P (fst x))
-    ∘∘ (∫ P) f g h = Σ-prop-≡ (λ x → snd ((P ₀) (fst _)) _ _) (∘∘ (fst f) (fst g) (fst h))
-    id∘ (∫ P) = λ f → Σ-prop-≡ {!!} (id∘ (fst f))
-    ∘id (∫ P) = λ f → Σ-prop-≡ {!!} (∘id (fst f))
-    hom-set (∫ P) {a1 , a2} {b1 , b2} = Σ-set hom-set λ u → {!!}
+--     id (∫ P) x = id (fst x) , cong (_$ snd x) (fid P (fst x))
+--     ∘∘ (∫ P) f g h = Σ-prop-≡ (λ x → snd ((P ₀) (fst _)) _ _) (∘∘ (fst f) (fst g) (fst h))
+--     id∘ (∫ P) = λ f → Σ-prop-≡ {!!} (id∘ (fst f))
+--     ∘id (∫ P) = λ f → Σ-prop-≡ {!!} (∘id (fst f))
+--     hom-set (∫ P) {a1 , a2} {b1 , b2} = Σ-set hom-set λ u → {!!}
 
-    uhm : {P Q : PSh}
-        → Functor ((∫ Q) ᵒᵖ) (Sets {l''}) → NatTrans (C ᵒᵖ) (Sets {l''}) P Q
-        → Functor ((∫ P) ᵒᵖ) (Sets {l''})
-    _₀ (uhm A ϕ) (I , γ) = (A ₀) (I , fst ϕ I γ)
-    _₁ (uhm A ϕ) {a = (I , γ)} (u , p) x =
-      (A ₁) (u , cong (_$ γ) (snd ϕ u) · cong (fst ϕ _) p) x
-    fid (uhm A ϕ) x = funExt _ (λ y → {!!}) -- fid A >>= λ f → ∣ (λ _ → f _) ∣
-    f∘ (uhm A ϕ) = {!!}
-      -- do
-      -- fA <- f∘ A
-      -- ∣ (λ {i} {j} {k} f g →
-      --   fA (fst' f , cong (_$ snd j) <$> snd' ϕ (fst' f) ● cong (fst' ϕ (fst k)) <$> snd' f)
-      --      (fst' g , cong (_$ snd i) <$> snd' ϕ (fst' g) ● cong (fst' ϕ (proj₁ j)) <$> snd' g)) ∣
+--     uhm : {P Q : PSh}
+--         → Functor ((∫ Q) ᵒᵖ) (Sets {l''}) → NatTrans (C ᵒᵖ) (Sets {l''}) P Q
+--         → Functor ((∫ P) ᵒᵖ) (Sets {l''})
+--     _₀ (uhm A ϕ) (I , γ) = (A ₀) (I , fst ϕ I γ)
+--     _₁ (uhm A ϕ) {a = (I , γ)} (u , p) x =
+--       (A ₁) (u , cong (_$ γ) (snd ϕ u) · cong (fst ϕ _) p) x
+--     fid (uhm A ϕ) x = funExt _ (λ y → {!!}) -- fid A >>= λ f → ∣ (λ _ → f _) ∣
+--     f∘ (uhm A ϕ) = {!!}
+--       -- do
+--       -- fA <- f∘ A
+--       -- ∣ (λ {i} {j} {k} f g →
+--       --   fA (fst' f , cong (_$ snd j) <$> snd' ϕ (fst' f) ● cong (fst' ϕ (fst k)) <$> snd' f)
+--       --      (fst' g , cong (_$ snd i) <$> snd' ϕ (fst' g) ● cong (fst' ϕ (proj₁ j)) <$> snd' g)) ∣
 
 record HasTerminalObj {l l'} (C : Category {l} {l'}) : Set (l ⊔ l') where
   open Category C
@@ -344,16 +396,16 @@ module _ where
   bang terminalSets = λ _ _ → tt
   uniq terminalSets = λ x f → refl
 
-module _ {l} {l'} {l''} (C : Category {l} {l'}) where
+-- module _ {l} {l'} {l''} (C : Category {l} {l'}) where
 
-  open Category
-  open HasTerminalObj
+--   open Category
+--   open HasTerminalObj
 
-  PShTerm : HasTerminalObj (PShCat {l'' = l''} C)
-  one PShTerm =
-    record { _₀ = λ _ → one terminalSets
-           ; _₁ = λ _ x → x
-           ; fid = const refl
-           ; f∘ = λ _ _ → refl }
-  bang PShTerm _ = (λ _ _ → tt) , λ _ → refl
-  uniq PShTerm _ _ = refl
+--   PShTerm : HasTerminalObj (PShCat {l'' = l''} C)
+--   one PShTerm =
+--     record { _₀ = λ _ → one terminalSets
+--            ; _₁ = λ _ x → x
+--            ; fid = const refl
+--            ; f∘ = λ _ _ → refl }
+--   bang PShTerm _ = (λ _ _ → tt) , λ _ → refl
+--   uniq PShTerm _ _ = refl

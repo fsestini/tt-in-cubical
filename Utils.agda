@@ -122,6 +122,12 @@ postulate
 Σ-level (suc n) h1 h2 (a1 , b1) (a2 , b2) =
   h-lev-equiv (invEquiv Σ-≡-equiv) n (Σ-level n (h1 a1 a2) λ x → h2 _ _ _)
 
+level2-is-set : ∀{l} {A : Set l} -> h-level 2 A -> isSet A
+level2-is-set h = λ x y p q → fst (h x y p q)
+
+postulate set-is-level2 : ∀{l} {A : Set l} -> isSet A -> h-level 2 A
+-- set-is-level2 h x y p q = h x y p q , λ r → {!!}
+
 Π-level : ∀{l l'} {A : Set l} {B : A -> Set l'}
        -> (n : ℕ)
        -> ((x : A) -> h-level n (B x))
