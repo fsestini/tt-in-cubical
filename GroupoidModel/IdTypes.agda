@@ -1,102 +1,132 @@
-module GroupoidModel.IdTypes {l} where
+module GroupoidModel.IdTypes where
 
 open import Cubical.Core.Prelude
 open import CategoryTheory
 open import GroupoidModel.Groupoid
 open import GroupoidModel.Basics
-open import GroupoidModel.Universe {l}
 open import Agda.Primitive
 open import Function using (_$_)
 open import Utils
 
-open Groupoid
-
-module _ (A : Groupoid {l}) where
+module _ {l} (A : Groupoid {l}) where
 
   open Functor
-
-  Id : Functor (cat (gcross A A)) (cat Gpd)
-  (Id ₀) (a₁ , a₂) = Δgrpd (Morph a₁ a₂) hom-set
-    where open Category (cat A)
-  (Id ₁) {a = a1 , a2} {b = b1 , b2} (p1 , p2) =
-    (MkFunctor' (MkFunct (λ q → p2 ∘ (q ∘ fst (grpd A p1)))
-                         (ap (λ a → p2 ∘ (a ∘ fst (grpd A p1))))
-                         (λ x → hom-set _ _ _ _) λ f g → hom-set _ _ _ _)) ,
-    (MkFunctor' (MkFunct (λ q → fst (grpd A p2) ∘ (q ∘ p1))
-                         (ap (λ a → fst (grpd A p2) ∘ (a ∘ p1)))
-                         (λ x → hom-set _ _ _ _) λ f g → hom-set _ _ _ _))
-    , {!!}
-    where open Category (cat A)
-  fid Id = {!!}
-  f∘ Id = {!!}
-
-  IdTy : Ty (gcross A A)
-  IdTy = compFun _ _ _ Id incl
+  open Groupoid
+  open Tm
 
   dupl : Functor (cat A) (cross (cat A) (cat A))
   (dupl ₀) x = x , x
   (dupl ₁) f = f , f
-  fid dupl = {!!}
-  f∘ dupl = {!!}
+  fid dupl a = refl
+  f∘ dupl f g = refl
 
-  open Tm
-  open import Utils
+  module _ where
+    open Category (cat A)
 
-  refl-ctor : Tm A (compFun _ _ _ dupl IdTy)
-  (refl-ctor ₀') a = gid A a
-  (refl-ctor ₁') p = ap (p ∘_) (id∘ _) · snd (snd (grpd A p))
-    where open Category (cat A)
-  fid' refl-ctor _ = {!!}
-    where open Category (cat A)
-  f∘' refl-ctor _ _ = {!!}
+    Id : Functor (cat (gcross A A)) (Grpd {l}) -- (cat Gpd)
+    (Id ₀) (a1 , a2) = Δgrpd (Morph a1 a2) hom-set
+    (Id ₁) {a = a1 , a2} {b = b1 , b2} (p1 , p2) =
+      MkFunct (λ q → p2 ∘ (q ∘ fst (grpd A p1)))
+              (ap (λ a → p2 ∘ (a ∘ fst (grpd A p1))))
+              (λ x → hom-set _ _ _ _) λ f g → hom-set _ _ _ _
+    fid Id (a1 , a2) =
+      Functor-≡-prop _ _ _ _ hom-set
+        (funExt _ λ q → ap (λ z → id a2 ∘ (q ∘ z)) (sym-gid A a1)
+                      · id∘ (q ∘ id a1) · ∘id q)
+    f∘ Id (f , g) (f' , g') =
+      Functor-≡-prop _ _ _ _ hom-set (funExt _ goal)
+      where
+        subgoal1 : ((fst (grpd A f') ∘ fst (grpd A f)) ∘ (f ∘ f')) ≡ id _
+        subgoal1 = {!!}
+        subgoal2 : ((f ∘ f') ∘ (fst (grpd A f') ∘ fst (grpd A f))) ≡ id _
+        subgoal2 = {!!}
+        goal : (q : _) -> ((g ∘ g') ∘ (q ∘ fst (grpd A (f ∘ f'))))
+                       ≡ (g ∘ ((g' ∘ (q ∘ fst (grpd A f'))) ∘ fst (grpd A f)))
+        goal q = begin
+                   ((g ∘ g') ∘ (q ∘ fst (grpd A (f ∘ f'))))
+                     ≡⟨ {!!} ⟩
+                   (((g ∘ g') ∘ q) ∘ fst (grpd A (f ∘ f')))
+                     ≡⟨ ap (((g ∘ g') ∘ q) ∘_) (inverseUnique (cat A) (f ∘ f') _ _
+                            (snd (grpd A (f ∘ f'))) (subgoal1 , subgoal2)) ⟩
+                   ((((g ∘ g') ∘ q) ∘ (fst (grpd A f') ∘ fst (grpd A f))))
+                     ≡⟨ {!!} ⟩
+                   (g ∘ ((g' ∘ (q ∘ fst (grpd A f'))) ∘ fst (grpd A f)))
+                     ∎
 
-  refl-fun : Functor (cat A) (cat (gcross A A ,, IdTy))
-  (refl-fun ₀) x = (x , x) , (refl-ctor ₀' $ x)
-  (refl-fun ₁) f = (f , f) , (refl-ctor ₁' $ f)
+    refl-ctor : Tm A (compFun _ _ _ dupl Id)
+    (refl-ctor ₀') a = gid A a
+    (refl-ctor ₁') p = ap (p ∘_) (id∘ _) · snd (snd (grpd A p))
+    fid' refl-ctor γ = hom-set _ _ _ _
+    f∘' refl-ctor _ _ = hom-set _ _ _ _
 
-  module _ (C : Functor (cat (gcross A A ,, IdTy)) (cat Gpd))
-           (h : Tm A (compFun _ _ _ refl-fun (compFun _ _ _ C incl))) where
+    refl-fun : Functor (cat A) (cat (gcross A A ,, Id))
+    (refl-fun ₀) x = (x , x) , (refl-ctor ₀' $ x)
+    (refl-fun ₁) f = (f , f) , (refl-ctor ₁' $ f)
+    fid refl-fun x = Σ-≡ (refl , hom-set _ _ _ _)
+    f∘ refl-fun f g = Σ-≡ (refl , hom-set _ _ _ _)
 
-    open Functor'
-    -- open Category
+  module _ (C : Functor (cat (gcross A A ,, Id)) (Grpd {l}))
+           (h : Tm A (compFun _ _ _ refl-fun C)) where
 
-    J-elim : Tm (gcross A A ,, IdTy) (compFun _ _ _ C incl)
-    (J-elim ₀') ((a1 , a2) , r) =
-      (unFunctor' $ fst ((C ₁) (((gid A a1) , r) , aux))) ₀ $ h ₀' $ a1
+    J-elim : Tm (gcross A A ,, Id) C
+    (J-elim ₀') ((a1 , a2) , r) = (((C ₁) (((gid A a1) , r) , aux)) ₀) (h ₀' $ a1)
       where
         open Category (cat A)
         aux : (r ∘ (id a1 ∘ fst (grpd A (id a1)))) ≡ r
         aux = ap (r ∘_) (snd (snd (grpd A (id a1)))) · ∘id r
     (J-elim ₁') {(a1 , a2) , r} {(a1' , a2') , r'} ((p₁ , p₂) , q) = goal
       where
-        open Category
+        p₁⁻¹ = fst (grpd A p₁)
+        _∘×_ = Category._∘_ (cat (gcross A A ,, Id))
         
-        C1 : ∀{a b} -> Morph (cat (gcross A A ,, IdTy)) a b
+        C1 : ∀{a b} -> Category.Morph (cat (gcross A A ,, Id)) a b
            -> Functor (cat ((C ₀) a)) (cat ((C ₀) b))
-        C1 p = unFunctor' (fst ((C ₁) p))
+        C1 p = (C ₁) p -- unFunctor' (fst ((C ₁) p))
         
         goalGrpd = (C ₀ $ (a1' , a2') , r')
         
         h1p1 = (h ₁') p₁
 
-        z : GMorph (gcross A A ,, IdTy) ((a1' , a1') , (refl-ctor ₀' $ a1')) ((a1' , a2') , r')
-        z = ((gid A a1') , r') , {!!}
+        open Category (cat A)
 
+        z : GMorph (gcross A A ,, Id) ((a1' , a1') , (refl-ctor ₀' $ a1')) ((a1' , a2') , r')
+        z = (gid A a1' , r') , ap (_∘_ r') (snd $ snd (grpd A (gid A a1'))) · ∘id r'
+          
         C1z : GMorph goalGrpd
                      (C1 z ₀ $ C1 ((p₁ , p₁) , _) ₀ $ h ₀' $ a1)
                      (((C1 ((gid A a1' , r') , _)) ₀) (h ₀' $ a1'))
         C1z = C1 z ₁ $ h1p1
 
-        prf : (C1 ((p₁ , _∘_ (cat A) p₂ r) , {!!}) ₀ $ h ₀' $ a1)
-            ≡ (C1 z ₀ $ C1 ((p₁ , p₁) , _) ₀ $ h ₀' $ a1)
-        prf = {!!}
+        aux : (p₂ ∘ r) ∘ (id a1 ∘ fst (grpd A p₁)) ≡ r'
+        aux = (ap (_∘_ (p₂ ∘ r)) (id∘ _)
+                · ∘∘ p₂ r _ · q · (sym $ ∘id r')
+                · ap (_∘_ r') (sym $ snd $ snd (grpd A (gid A a1'))))
+                · ap (_∘_ r') (snd $ snd (grpd A (gid A a1')))
+                · ∘id r'
 
-        goal' : GMorph goalGrpd -- (C ₀ $ (a1' , a2') , r')
-                       (C1 ((p₁ , _∘_ (cat A) p₂ r) , {!!}) ₀ $ h ₀' $ a1)
+        prf : (C1 ((p₁ , p₂ ∘ r) , aux) ₀ $ h ₀' $ a1)
+            ≡ (C1 z ₀ $ C1 ((p₁ , p₁) , _) ₀ $ h ₀' $ a1)
+        prf = ap (λ w → (C1 w) ₀ $ (h ₀') a1) eq · (ap (_$ (h ₀' $ a1)) $ ap _₀ (f∘ C z ((p₁ , p₁) , _)))
+          where
+            q' : p₂ ∘ r ≡ r' ∘ p₁
+            q' = ap (p₂ ∘_) (sym (∘∘ r p₁⁻¹ p₁ · (ap (r ∘_) (fst (snd (grpd A p₁)))
+                 · ∘id r))) · sym (∘∘ p₂ (r ∘ p₁⁻¹) p₁) · ap (_∘ p₁) q
+            eq : ((p₁ , p₂ ∘ r) , aux)
+               ≡ (_∘×_ z ((p₁ , p₁) , (refl-ctor ₁') p₁))
+            eq = Σ-prop-≡ (λ x → hom-set _ _) (×-≡ (sym (id∘ p₁)) q')
+
+        goal' : GMorph goalGrpd
+                       (C1 ((p₁ , p₂ ∘ r) , _) ₀ $ h ₀' $ a1)
                        (((C1 ((gid A a1' , r') , _)) ₀) (h ₀' $ a1'))
         goal' = substMorph {C = cat goalGrpd} (sym prf) C1z
 
-        goal : GMorph goalGrpd -- (cat (C ₀ $ (a1' , a2') , r'))
+        prf2 : ((C1 ((p₁ , p₂ ∘ r) , aux) ₀) $ (h ₀') $ a1)
+             ≡ ((C1 ((p₁ , p₂) , q) ₀) $ (C1 ((gid A a1 , r) , _) ₀) $ (h ₀') $ a1)
+        prf2 = {!!} · (ap (_$ (h ₀' $ a1)) $ ap _₀ (f∘ C ((p₁ , p₂) , q) ((gid A a1 , r) , _)))
+
+        goal : GMorph goalGrpd
                       (C1 ((p₁ , p₂) , q) ₀ $ C1 (((gid A a1) , r) , _) ₀ $ h ₀' $ a1)
                       (((C1 ((gid A a1' , r') , _)) ₀) (h ₀' $ a1'))
-        goal = substMorph {C = cat goalGrpd} {!!} goal'
+        goal = substMorph {C = cat goalGrpd} prf2 goal'
+    fid' J-elim _ = {!!}
+    f∘' J-elim = {!!}

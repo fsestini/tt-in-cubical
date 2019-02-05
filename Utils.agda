@@ -7,6 +7,15 @@ open import Cubical.Core.Prelude
 open import Cubical.Core.Glue -- Basics.Everything
 open import Cubical.Basics.Everything
 
+-- uncurry : ∀{l l' l''} {A : Set l} {B : Set l'} {C : Set l''}
+--         -> (A -> B -> C) -> A × B -> C
+-- uncurry f (x , y) = f x y
+
+subst2 : {ℓ ℓ' l : Level} {A : Set ℓ} {B : Set l} (C : A -> B → Set ℓ')
+      {a a' : A} {b b' : B} →
+      a ≡ a' -> b ≡ b' → C a b → C a' b'
+subst2 C p q x = subst (λ y → C y _) p (subst (C _) q x)
+
 infixl 6 _·_
 _·_ = compPath
 
@@ -57,6 +66,11 @@ module _ {l l'} {A : Set l} {B : A -> Set l'} where
     Σ-≡-equiv : (p ≡ q) ≃ Σ (fst p ≡ fst q) (λ r → subst B r (snd p) ≡ snd q)
     Σ-≡-equiv = coΣ-≡ , qinvIsEquiv coΣ-≡ coΣ-≡-qinv
       where p1 = fst p ; p2 = snd p ; q1 = fst q
+
+module _ {l l'} {A : Set l} {B : Set l'} where
+
+  ×-≡ : {p q : A × B} -> fst p ≡ fst q -> snd p ≡ snd q -> p ≡ q
+  ×-≡ {p} h1 h2 = Σ-≡ (h1 , transpRefl B (snd p) · h2)
 
 ×-prop : ∀{l l'} {P : Set l} {Q : Set l'}
        -> isProp P -> isProp Q -> isProp (P × Q)

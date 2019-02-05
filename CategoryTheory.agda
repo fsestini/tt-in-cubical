@@ -28,6 +28,7 @@ record Category {l} {l'} : Set (lsuc (l ⊔ l')) where
 module _ {l} (A : Set l) (aset : isSet A) where
 
   open Category
+  open import Cubical.Core.PropositionalTruncation
 
   -- discrete category
   Δ : Category {l} {l}
@@ -58,8 +59,18 @@ module _ {l} {l'} (C : Category {l} {l'}) where
 
   open Category C
 
+  _isInverseOf_ : ∀{a b} -> Morph b a -> Morph a b -> Set _
+  g isInverseOf f = g ∘ f ≡ id _ × f ∘ g ≡ id _
+
   isIso : ∀{a b} → Morph a b → Set _
-  isIso {a} {b} f = Σ (Morph b a) λ g → g ∘ f ≡ id _ × f ∘ g ≡ id _
+  isIso {a} {b} f = Σ (Morph b a) λ g → g isInverseOf f
+
+  inverseUnique : ∀{a b} (f : Morph a b) (g1 g2 : Morph b a)
+                -> g1 isInverseOf f -> g2 isInverseOf f
+                -> g1 ≡ g2
+  inverseUnique f g1 g2 h1 h2 =
+      sym (id∘ g1) · ap (_∘ g1) (sym (fst h2)) · ∘∘ g2 f g1
+    · ap (g2 ∘_) (snd h1) · ∘id g2
 
   isIsoIsProp : ∀{a b} -> (u : Morph a b) -> isProp (isIso u)
   isIsoIsProp u = {!!}
@@ -113,19 +124,6 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
     field
       unFunctor' : Functor
 
-  -- record Functor' : Set (lsuc (l ⊔ l' ⊔ l'' ⊔ l''')) where
-  --   constructor MkFunct'
-  --   open Category
-  --   field
-  --     _₀ : Obj C → Obj D
-  --     _₁ : ∀{a b} → Morph C a b → Morph D (_₀ a) (_₀ b)
-  --     fid : (∀ x → _₁ (id C x) ≡ id D (_₀ x))
-  --     f∘  : (∀{i j k} (f : Morph C j k) (g : Morph C i j)
-  --         → _₁ (_∘_ C f g) ≡ _∘_ D (_₁ f) (_₁ g))
-
-  -- fun' : Functor' -> Functor
-  -- fun' (MkFunct' _₀ _₁ fid f∘) = MkFunct _₀ _₁ fid f∘
-
   _⟶_ = Functor
 
   module _ where
@@ -137,6 +135,12 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
     MorphPart : ObjPart → Set _
     MorphPart _₀ = ∀{a b} → Morph C a b → Morph D (_₀ a) (_₀ b)
 
+    record FunctorEq (F0 : ObjPart) (F1 : MorphPart F0) (G0 : ObjPart) (G1 : MorphPart G0) : Set (l ⊔ l' ⊔ l'' ⊔ l''') where
+      field
+        eq0 : (x : _) -> F0 x ≡ G0 x
+        eq1 : ∀{a b} (f : Morph C a b)
+            -> _≡_ {A = Morph D (G0 a) (G0 b)} (subst2 (Morph D) (eq0 a) (eq0 b) (F1 f)) (G1 f)
+        
     Functoriality : (o : ObjPart) -> MorphPart o -> Set _
     Functoriality F₀ F₁ =
         (∀ x → F₁ (id C x) ≡ id D (F₀ x))
@@ -158,6 +162,23 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
 
     Functor-≡ : (F G : Functor) -> fst (fst funct≃Σ F) ≡ fst (fst funct≃Σ G) -> F ≡ G
     Functor-≡ F G h = ≡-on-≃ funct≃Σ (Σ-prop-≡ (λ { (x , y) → functIsProp x y}) h)
+  
+
+    module _ where
+      open Functor
+      open FunctorEq
+
+      Functor-≡' : (F G : Functor)
+                 -> FunctorEq (F ₀) (F ₁) (G ₀) (G ₁)
+                 -> F ≡ G
+      Functor-≡' F G eq = Functor-≡ F G (Σ-≡ (funExt _ (eq0 eq) , {!!}))
+
+      Functor-≡-prop : (F G : Functor)
+                     -> ((a b : Obj D) → isProp (Morph D a b))
+                     -> F ₀ ≡ G ₀
+                     -> F ≡ G
+      Functor-≡-prop F G h p = Functor-≡' F G
+        (record { eq0 = λ x → ap (_$ x) p ; eq1 = λ f → h _ _ _ _ })
 
     functIsSet : isStrictCategory C -> isSet Functor
     functIsSet k =
