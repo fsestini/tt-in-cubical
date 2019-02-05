@@ -105,8 +105,8 @@ data Tm where
   β   : ∀{Γ} {A : Ty Γ} {B : Ty (Γ , A)} (t : Tm (Γ , A) B) → app (lam t) ≡ t
   η   : ∀{Γ} {A : Ty Γ} {B : Ty (Γ , A)} (f : Tm Γ (Π A B)) → lam (app f) ≡ f
   
-  -- lam[] : ∀{Δ Γ} {A : Ty Γ} {B : Ty (Γ , A)} (t : Tm (Γ , A) B) (σ : Tms Δ Γ)
-  --       -> (lam t) [ σ ]'aux ≡ subst (Tm Δ) (sym (Π[] A B σ)) (lam (t [ σ ↑ A ]'aux))
+  lam[] : ∀{Δ Γ} {A : Ty Γ} {B : Ty (Γ , A)} (t : Tm (Γ , A) B) (σ : Tms Δ Γ)
+        -> (lam t) [ σ ]'aux ≡ subst (Tm Δ) (sym (Π[] A B σ)) (lam (t [ σ ↑ A ]'aux))
 
 _[_]aux = _[_]
 _[_]'aux = _[_]'

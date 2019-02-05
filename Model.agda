@@ -92,10 +92,6 @@ record Model {l} {l'} {l''} {l'''} : Set (lsuc (l ⊔ l' ⊔ l'' ⊔ l''')) wher
     Uᴹ : ∀{Γ} → Tyᴹ Γ
     U[]ᴹ : ∀{Δᴹ Γᴹ} (σᴹ : Tmsᴹ Γᴹ Δᴹ) → Uᴹ [ σᴹ ]ᴹ ≡ Uᴹ
 
-    -- _[_]'Uᴹ : ∀{Γ Δ} → Tmᴹ Δ Uᴹ → (σ : Tmsᴹ Γ Δ) → Tmᴹ Γ Uᴹ
-    -- []U≡ᴹ : ∀{Γ Δ} → (t : Tmᴹ Δ Uᴹ) → (σ : Tmsᴹ Γ Δ)
-    --       → PathP (λ i → Tmᴹ Γ (U[]ᴹ σ i)) (t [ σ ]'ᴹ) (t [ σ ]'Uᴹ)
-
     Πᴹ : ∀{Γ} (A : Tyᴹ Γ) (B : Tyᴹ (Γ ,ᴹ A)) → Tyᴹ Γ
     Π[]ᴹ : ∀{Γ Δ} (A : Tyᴹ Γ) (B : Tyᴹ (Γ ,ᴹ A)) → (σ : Tmsᴹ Δ Γ)
          -> let _↑ᴹ_ : ∀{Γ Δ} → (σ : Tmsᴹ Γ Δ) → (A : Tyᴹ Δ) → Tmsᴹ (Γ ,ᴹ (A [ σ ]ᴹ)) (Δ ,ᴹ A)
@@ -112,10 +108,10 @@ record Model {l} {l'} {l''} {l'''} : Set (lsuc (l ⊔ l' ⊔ l'' ⊔ l''')) wher
     βᴹ   : ∀{Γ} {A : Tyᴹ Γ} {B : Tyᴹ (Γ ,ᴹ A)} (t : Tmᴹ (Γ ,ᴹ A) B) → appᴹ (lamᴹ t) ≡ t
     ηᴹ   : ∀{Γ} {A : Tyᴹ Γ} {B : Tyᴹ (Γ ,ᴹ A)} (f : Tmᴹ Γ (Πᴹ A B)) → lamᴹ (appᴹ f) ≡ f
 
-    -- lam[]ᴹ : ∀{Δ Γ} {A : Tyᴹ Γ} {B : Tyᴹ (Γ ,ᴹ A)} (t : Tmᴹ (Γ ,ᴹ A) B) (σ : Tmsᴹ Δ Γ)
-    --       -> let _↑ᴹ_ : ∀{Γ Δ} → (σ : Tmsᴹ Γ Δ) → (A : Tyᴹ Δ) → Tmsᴹ (Γ ,ᴹ (A [ σ ]ᴹ)) (Δ ,ᴹ A)
-    --              σ ↑ᴹ A = (σ ∘ᴹ π₁ᴹ (idᴹ _)) ,sᴹ subst (Tmᴹ _) [][]ᴹ (π₂ᴹ (idᴹ (_ ,ᴹ (A [ σ ]ᴹ))))
-    --          in ((lamᴹ t) [ σ ]'ᴹ) ≡ subst (Tmᴹ Δ) (sym (Π[]ᴹ A B σ)) (lamᴹ (t [ σ ↑ᴹ A ]'ᴹ))
+    lam[]ᴹ : ∀{Δ Γ} {A : Tyᴹ Γ} {B : Tyᴹ (Γ ,ᴹ A)} (t : Tmᴹ (Γ ,ᴹ A) B) (σ : Tmsᴹ Δ Γ)
+          -> let _↑ᴹ_ : ∀{Γ Δ} → (σ : Tmsᴹ Γ Δ) → (A : Tyᴹ Δ) → Tmsᴹ (Γ ,ᴹ (A [ σ ]ᴹ)) (Δ ,ᴹ A)
+                 σ ↑ᴹ A = (σ ∘ᴹ π₁ᴹ (idᴹ _)) ,sᴹ subst (Tmᴹ _) [][]ᴹ (π₂ᴹ (idᴹ (_ ,ᴹ (A [ σ ]ᴹ))))
+             in ((lamᴹ t) [ σ ]'ᴹ) ≡ subst (Tmᴹ Δ) (sym (Π[]ᴹ A B σ)) (lamᴹ (t [ σ ↑ᴹ A ]'ᴹ))
 
     ty-trunc : ∀{Γ} -> isSet (Tyᴹ Γ)
 
@@ -170,7 +166,7 @@ module _ {l} {l'} {l''} {l'''} (M : Model {l} {l'} {l''} {l'''}) where
     tm (app f) = appᴹ (tm f)
     tm (β t i) = βᴹ (tm t) i
     tm (η f i) = ηᴹ (tm f) i
-    -- tm (lam[] {A = A} {B} t σ i) = {!!}
+    tm (lam[] {A = A} {B} t σ i) = lam[]-proof A B σ t i
 
     [id]-proof = [id]ᴹ
     [][]-proof = [][]ᴹ
@@ -181,6 +177,13 @@ module _ {l} {l'} {l''} {l'''} (M : Model {l} {l'} {l''} {l'''}) where
     πη-proof = πηᴹ
     π₂≡-proof = π₂≡ᴹ
 
+    lamᴹsub : ∀{Γ Δ} (A : Tyᴹ _) (B : Tyᴹ _) (t : Tmᴹ (Γ ,ᴹ A) B) (σ : Tmsᴹ _ _)
+              {γ τ : Tmsᴹ (Δ ,ᴹ (A [ σ ]ᴹ)) (Γ ,ᴹ A)} (p : γ ≡ τ)
+            -> lamᴹ (t [ γ ]'ᴹ) ≡ subst (Tmᴹ _) (ap (λ z → Πᴹ _ (B [ z ]ᴹ)) (sym p)) (lamᴹ (t [ τ ]'ᴹ))
+    lamᴹsub {Γ} {Δ} A B t σ {γ} =
+      J (λ τ' p' → lamᴹ (t [ γ ]'ᴹ) ≡ subst (Tmᴹ _) (ap (λ z → Πᴹ _ (B [ z ]ᴹ)) (sym p')) (lamᴹ (t [ τ' ]'ᴹ)))
+        (sym (transpRefl (Tmᴹ _ (Πᴹ _ _)) (lamᴹ (t [ γ ]'ᴹ))))
+      
     swap-subst : ∀{Γ Ty1 Ty2} {t : Tm Γ Ty1}
       -> (p : Ty1 ≡ Ty2) (q : ty Ty1 ≡ ty Ty2)
       -> tm (subst (Tm Γ) p t) ≡ subst (Tmᴹ (con Γ)) q (tm t)
@@ -206,7 +209,23 @@ module _ {l} {l'} {l''} {l'''} (M : Model {l} {l'} {l''} {l'''}) where
       swap-subst {t = π₂ ((τ , t) ∘ σ)} (cong (_[_] A) ,∘₁ · sym [][])
         (cong (_[_]ᴹ (ty A)) ,∘₁ᴹ · sym [][]ᴹ) · ,∘₂ᴹ {τ = tms τ} {tms σ} {ty A} {tm t}
 
-    -- lam[]-proof : ∀{Γ Δ} (A : Ty Δ) (B : Ty (Δ , A)) (σ : Tms Γ Δ) (t : Tm (Δ , A) B)
-    --             -> tm ((lam t) [ σ ]') ≡ tm (subst (Tm _) (sym (Π[] A B σ)) (lam (t [ σ ↑ A ]'aux)))
-    -- lam[]-proof A B σ t =
-    --   lam[]ᴹ {A = ty A} {B = ty B} (tm t) (tms σ) · sym (swap-subst {t = lam (t [ σ ↑ A ]'aux)} (sym (Π[] A B σ)) {!sym (Π[]ᴹ (ty A) (ty B) (tms σ))!} · {!!})
+    open import Function using (_$_)
+    
+    lam[]-proof : ∀{Γ Δ} (A : Ty Δ) (B : Ty (Δ , A)) (σ : Tms Γ Δ) (t : Tm (Δ , A) B)
+                -> tm ((lam t) [ σ ]') ≡ tm (subst (Tm _) (sym (Π[] A B σ)) (lam (t [ σ ↑ A ]'aux)))
+    lam[]-proof {Γ} {Δ} A B σ t = begin
+      (lamᴹ (tm t) [ tms σ ]'ᴹ)
+        ≡⟨ lam[]ᴹ {A = ty A} {B = ty B} (tm t) (tms σ) ⟩
+      (subst (Tmᴹ _) (sym (Π[]ᴹ (ty A) (ty B) (tms σ))) (lamᴹ ((tm t) [ tms σ ↑ᴹ ty A ]'ᴹ)))
+        ≡⟨ ap (subst (Tmᴹ _) (sym (Π[]ᴹ (ty A) (ty B) (tms σ)))) (lamᴹsub (ty A) (ty B) (tm t) (tms σ) aux) ⟩
+      (subst (Tmᴹ _) (sym (Π[]ᴹ (ty A) (ty B) (tms σ))) (subst (Tmᴹ _) (ap (λ z → Πᴹ (ty (A [ σ ])) (ty B [ z ]ᴹ)) (sym aux)) (tm (lam (t [ σ ↑ A ]')))))
+        ≡⟨ {!!} ⟩
+      (subst (Tmᴹ _) (ap (λ z → Πᴹ (ty (A [ σ ])) (ty B [ z ]ᴹ)) (sym aux) · sym (Π[]ᴹ (ty A) (ty B) (tms σ))) (tm (lam (t [ σ ↑ A ]'))))
+        ≡⟨ sym (swap-subst {t = lam (t [ σ ↑ A ]')} (sym (Π[] A B σ)) (ap (λ z → Πᴹ (ty (A [ σ ])) (ty B [ z ]ᴹ)) (sym aux) · sym (Π[]ᴹ (ty A) (ty B) (tms σ)))) ⟩
+      (tm (subst (Tm _) (sym (Π[] A B σ)) (lam (t [ σ ↑ A ]'))))
+        ∎
+      where
+        _↑ᴹ_ : ∀{Γ Δ} → (σ : Tmsᴹ Γ Δ) → (A : Tyᴹ Δ) → Tmsᴹ (Γ ,ᴹ (A [ σ ]ᴹ)) (Δ ,ᴹ A)
+        σ ↑ᴹ A = (σ ∘ᴹ π₁ᴹ (idᴹ _)) ,sᴹ subst (Tmᴹ _) [][]ᴹ (π₂ᴹ (idᴹ (_ ,ᴹ (A [ σ ]ᴹ))))
+        aux : tms σ ↑ᴹ ty A ≡ tms (σ ↑ A)
+        aux = ap (tms (σ ∘ π₁ (id (Γ , (A [ σ ])))) ,sᴹ_) (sym (swap-subst {t = π₂ (id (_ , (A [ σ ])))} [][] [][]ᴹ))
