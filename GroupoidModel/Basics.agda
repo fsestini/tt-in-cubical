@@ -76,6 +76,26 @@ module _ {l} {l'} where
   grpd (Γ ,, A) f = {!!}
   strct (Γ ,, A) = {!!}
 
+  module _ {Γ : Groupoid {l}} {A : Ty {l} {l'} Γ} where
+
+    open Functor
+
+    p : cat (Γ ,, A) ⟶ cat Γ
+    (p ₀) (γ , x) = γ
+    (p ₁) (p , q) = p
+    fid p = {!!}
+    f∘ p = {!!}
+
+  module _ {Γ Δ : Groupoid {l}} {A : Ty {l} {l'} Δ} where
+
+    π₁ : cat Γ ⟶ cat (Δ ,, A) → cat Γ ⟶ cat Δ
+    π₁ σ =
+      MkFunct (λ x → fst ((σ ₀) x))
+              (λ f → fst ((σ ₁) f))
+              (λ x → cong fst (fid σ x))
+              λ f g → cong fst (f∘ σ f g)
+      where open Functor ; open Category
+
   module _ (Γ : Groupoid {l}) (A : Ty {l} {l'} Γ) (a : Tm Γ A) where
 
     open Functor
@@ -86,6 +106,17 @@ module _ {l} {l'} where
     (,,fun ₁) p = p , (a ₁' $ p)
     fid ,,fun γ = {!!}
     f∘ ,,fun p q = {!!}
+
+module _ {l} (H : (A : Groupoid {l}) -> Functor (cat (gcross A A)) (Grpd {l})) (Γ : Groupoid {l}) (A : Ty {l} {l} Γ) where
+
+    open Functor
+    open Category
+
+    asd : Functor (cat ((Γ ,, A) ,, compFun _ _ _ (p {l} {l} {Γ} {A}) A)) (Grpd {l})
+    (asd ₀) ((γ , x) , y) = (H ((A ₀) γ)) ₀ $ x , y
+    (asd ₁) = {!!}
+    fid asd = {!!}
+    f∘ asd = {!!}
 
   -- π₁ : ∀{Γ Δ} {A : Ty Δ} → Γ ⟶ cat (Δ ,, A) → Γ ⟶ cat Δ
   -- π₁ σ =

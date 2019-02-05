@@ -9,18 +9,19 @@ open import GroupoidModel.Basics
 open import Model
 open import CategoryTheory
 open import Cubical.Core.Prelude
+open import Agda.Primitive
 
 open Model.Model
 open Groupoid
 
-module _ {l} {l'} where
+module _ {l} where
 
-  open import GroupoidModel.Universe {l}
+  -- open import GroupoidModel.Universe {l}
 
   grpdModel : Model
-  Conᴹ grpdModel = Groupoid
+  Conᴹ grpdModel = Groupoid {lsuc l}
   Tmsᴹ grpdModel = GrpdFunctor
-  Tyᴹ  grpdModel Γ = cat Γ ⟶ Grpd
+  Tyᴹ  grpdModel Γ = cat Γ ⟶ Grpd {lsuc l}
   Tmᴹ  grpdModel Γ A = Tm Γ A
   _,ᴹ_ grpdModel Γ A = Γ ,, A
   -- π₁ᴹ  grpdModel {Γᴹ = record { cat = Γ }} σ =
@@ -57,13 +58,13 @@ module _ {l} {l'} where
   -- ,∘₂ᴹ grpdModel i = {!!}
   -- π₂∘ᴹ grpdModel σ = {!!}
   -- π₂≡ᴹ grpdModel σ i = {!!}
-  Uᴹ grpdModel = ConstFunctor _ _ Gpd
+  Uᴹ grpdModel = ? -- ConstFunctor _ _ Gpd
   -- U[]ᴹ grpdModel σᴹ x = {!!}
   -- _[_]'Uᴹ grpdModel x σ = {!!}
   -- []U≡ᴹ grpdModel t σ i = {!!}
   -- Πᴹ grpdModel A B = {!!}
   -- Π[]ᴹ grpdModel A B σ x = {!!}
-  Elᴹ grpdModel A = ConstFunctor _ _ {!!}
+  Elᴹ grpdModel A = ? -- ConstFunctor _ _ {!!}
   -- El[]ᴹ grpdModel A σ x = {!!}
   -- lamᴹ grpdModel x = {!!}
   -- appᴹ grpdModel x = {!!}

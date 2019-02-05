@@ -22,16 +22,24 @@ module _ {l} where
       grpd : isGroupoid cat
 
   open Groupoid  
-  open Category
 
-  GObj : Groupoid -> Set l
-  GObj G = Obj (cat G)
-  
-  GMorph : (G : Groupoid) -> GObj G -> GObj G -> Set l
-  GMorph G x y = Morph (cat G) x y
+  module _ where
+    open Category
+    GObj : Groupoid -> Set l
+    GObj G = Obj (cat G)
 
-  gid : (G : Groupoid) (x : GObj G) -> GMorph G x x
-  gid G x = id (cat G) x
+    GMorph : (G : Groupoid) -> GObj G -> GObj G -> Set l
+    GMorph G x y = Morph (cat G) x y
+
+    gid : (G : Groupoid) (x : GObj G) -> GMorph G x x
+    gid G x = id (cat G) x
+
+  sym-gid : (G : Groupoid) (x : GObj G) -> fst (grpd G (gid G x)) ≡ gid G x
+  sym-gid G x =
+    inverseUnique (cat G) (gid G x) (fst gr) (gid G x)
+      (snd gr) (id∘ (id x) , id∘ (id x))
+    where open Category (cat G)
+          gr = (grpd G (gid G x))
 
 module _ {l} (A : Set l) (aset : isSet A) where
 
