@@ -4,6 +4,7 @@ open import GroupoidModel.Groupoid
 open import GroupoidModel.Basics
 open import Utils
 open import GroupoidModel.PiTypes
+open import GroupoidModel.IdTypes
 open import Model
 open import CategoryTheory
 open import Cubical.Core.Prelude
@@ -56,5 +57,6 @@ lamᴹ grpdModel t = lam _ _ t
 appᴹ grpdModel t = app _ _ t
 βᴹ grpdModel t = {!!}
 ηᴹ grpdModel f = {!!}
+Idᴹ grpdModel {Γ = Γ} A = IdType Γ A
 -- lam[]ᴹ grpdModel t σ = {!!}
 -- ty-trunc grpdModel = {!!}

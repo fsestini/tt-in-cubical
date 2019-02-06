@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 module GroupoidModel.IdTypes where
 
 open import Cubical.Core.Prelude
@@ -53,11 +55,11 @@ module _ {l} (A : Groupoid {l}) where
                    (g ∘ ((g' ∘ (q ∘ fst (grpd A f'))) ∘ fst (grpd A f)))
                      ∎
 
-    refl-ctor : Tm A (compFun _ _ _ dupl Id)
+    refl-ctor : Tm A (compFun dupl Id)
     (refl-ctor ₀') a = gid A a
     (refl-ctor ₁') p = ap (p ∘_) (id∘ _) · snd (snd (grpd A p))
-    fid' refl-ctor γ = hom-set _ _ _ _
-    f∘' refl-ctor _ _ = hom-set _ _ _ _
+    fid' refl-ctor γ = {!!} -- hom-set _ _ _ _
+    f∘' refl-ctor _ _ = {!!} -- hom-set _ _ _ _
 
     refl-fun : Functor (cat A) (cat (gcross A A ,, Id))
     (refl-fun ₀) x = (x , x) , (refl-ctor ₀' $ x)
@@ -66,7 +68,7 @@ module _ {l} (A : Groupoid {l}) where
     f∘ refl-fun f g = Σ-≡ (refl , hom-set _ _ _ _)
 
   module _ (C : Functor (cat (gcross A A ,, Id)) (Grpd {l}))
-           (h : Tm A (compFun _ _ _ refl-fun C)) where
+           (h : Tm A (compFun refl-fun C)) where
 
     J-elim : Tm (gcross A A ,, Id) C
     (J-elim ₀') ((a1 , a2) , r) = (((C ₁) (((gid A a1) , r) , aux)) ₀) (h ₀' $ a1)
@@ -130,3 +132,10 @@ module _ {l} (A : Groupoid {l}) where
         goal = substMorph {C = cat goalGrpd} prf2 goal'
     fid' J-elim _ = {!!}
     f∘' J-elim = {!!}
+
+module _ {l} (Γ : Groupoid {l}) (A : Ty Γ) where
+
+  open Groupoid
+
+  IdType : Ty ((Γ ,, A) ,, compFun (π₁ (Γ ,, A) (IdFunctor (cat (Γ ,, A)))) A)
+  IdType = compFun (rearrange Γ A) (Id (Γ ,, A))

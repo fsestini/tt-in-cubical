@@ -133,12 +133,54 @@ module _ {l} {l'} {C : Category {l} {l'}} {a b c : Category.Obj C} where
               a ≡ b -> Morph C a c -> Morph C b c
   substMorph p u = subst (λ z → Morph C z _) p u
 
-  data _≡[_]_ (u : Morph C a c) (p : a ≡ b) (v : Morph C b c) : Set l' where
-    PathOver : substMorph p u ≡ v -> u ≡[ p ] v
+  data PathOver (u : Morph C a c) (p : a ≡ b) (v : Morph C b c) : Set l' where
+    MkPathOver : substMorph p u ≡ v -> PathOver u p v
 
-  -- substMorph≡ : ∀{l l'} {C : Category {l} {l'}} {a b c : Obj C}
-  --             -> (p : a ≡ b) (f : Morph C a c) -> substMorph {C = C} p (id C a) ≡ {!!}
-  -- substMorph≡ = {!!}
+  getPathOver : {u : Morph C a c} {p : a ≡ b} {v : Morph C b c}
+              -> PathOver u p v -> substMorph p u ≡ v
+  getPathOver (MkPathOver x) = x
+
+module _ {l} {l'} {C : Category {l} {l'}} where
+  open Category
+
+  module _ {a b c d : Category.Obj C}
+           {p : a ≡ b} {u : Category.Morph C a d} {v : Category.Morph C b d}
+           {q : b ≡ c} {w : Category.Morph C c d}
+           where
+
+    compPathOver : PathOver {C = C} u p v -> PathOver {C = C} v q w
+                 -> PathOver {C = C} u (p · q) w
+    compPathOver (MkPathOver x) (MkPathOver y) = {!!}
+    -- MkPathOver (subst· p q {!!} · ap (substMorph q) x · y)
+   -- r (MkPathOver x) =
+    -- MkPathOver {!!} -- (sym (ap (substMorph q) r) · x)
+
+  module _ {a b c : Category.Obj C}
+           {p : a ≡ b} {u : Category.Morph C a c} {v : Category.Morph C b c}
+           where
+
+    symPathOver : PathOver {C = C} u p v -> PathOver {C = C} v (sym p) u
+    symPathOver (MkPathOver x) = {!!}
+     -- MkPathOver (sym (ap (substMorph (sym p)) x) · subst· (sym p) p u · {!!})
+
+  module _ {a b : Obj C} {u v : Morph C a b} where
+    overRefl : u ≡ v -> PathOver {C = C} u refl v
+    overRefl p = MkPathOver (transpRefl _ _ · p)
+
+  module _ {a b c : Obj C} {u : Category.Morph C a c} {v : Category.Morph C b c} {p : a ≡ b}
+           (strctCat : isStrictCategory C) where
+
+    substPathOver : (q : a ≡ b) -> PathOver {C = C} u p v -> PathOver {C = C} u q v
+    substPathOver q x = subst (λ z → PathOver u z v) {p} {q} (strctCat p q) x
+
+  -- module _ {a b c d : Obj C} {u : Category.Morph C a d} {v : Category.Morph C c d} {p : b ≡ c} {q : a ≡ b} where
+
+  --   collapsePathOver : PathOver {C = C} (substMorph {C = C} q u) p v -> PathOver {C = C} u (q · p) v
+  --   collapsePathOver = {!!}
+
+  module _ {a b c : Obj C} {u : Morph C a c} {q : a ≡ b} where
+    collapsePathOver : PathOver {C = C} (substMorph {C = C} q u) (sym q) u
+    collapsePathOver = MkPathOver {!!}
 
 module _ {l} {l'} where
   open Groupoid

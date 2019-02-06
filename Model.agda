@@ -113,6 +113,10 @@ record Model {l} {l'} {l''} {l'''} : Set (lsuc (l ⊔ l' ⊔ l'' ⊔ l''')) wher
                  σ ↑ᴹ A = (σ ∘ᴹ π₁ᴹ (idᴹ _)) ,sᴹ subst (Tmᴹ _) [][]ᴹ (π₂ᴹ (idᴹ (_ ,ᴹ (A [ σ ]ᴹ))))
              in ((lamᴹ t) [ σ ]'ᴹ) ≡ subst (Tmᴹ Δ) (sym (Π[]ᴹ A B σ)) (lamᴹ (t [ σ ↑ᴹ A ]'ᴹ))
 
+    Idᴹ : ∀{Γ} (A : Tyᴹ Γ) -> Tyᴹ ((Γ ,ᴹ A) ,ᴹ (A [ π₁ᴹ (idᴹ _) ]ᴹ))
+    -- reflᴹ : ∀{Γ} {A : Tyᴹ Γ} (a : Tmᴹ Γ A)
+    --       -> Tmᴹ Γ (Idᴹ A [ (idᴹ _ ,sᴹ subst (Tmᴹ Γ) (sym ([id]ᴹ A)) a) ,sᴹ subst (Tmᴹ Γ) (sym ([][]ᴹ · (ap (λ z → A [ z ]ᴹ) {!!} · [id]ᴹ A))) a ]ᴹ)
+
     ty-trunc : ∀{Γ} -> isSet (Tyᴹ Γ)
 
 variable
