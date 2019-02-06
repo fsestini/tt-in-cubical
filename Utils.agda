@@ -19,6 +19,13 @@ subst2 C p q x = subst (λ y → C y _) p (subst (C _) q x)
 infixl 6 _·_
 _·_ = compPath
 
+subst· : ∀{l l'} {A : Set l} {B : A -> Set l'} {x y z : A}
+       -> (p : x ≡ y) (q : y ≡ z) (u : B x)
+       -> subst B q (subst B p u) ≡ subst B (p · q) u
+subst· {B = B} {x} p =
+  J (λ _ q' → (u : B x) -> subst B q' (subst B p u) ≡ subst B (p · q') u)
+    λ u → transpRefl _ _ · sym {!!}
+
 ap = cong
 
 cong2 : ∀{ℓ ℓ' ℓ''} {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''}

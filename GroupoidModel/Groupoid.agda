@@ -119,9 +119,26 @@ module _ {l} where
                                ; eq1 = λ f → transpRefl _ _ · transpRefl _ _ })
   f∘  gliftFunctor = {!!}
 
-substMorph : ∀{l l'} {C : Category {l} {l'}} {a b c : Category.Obj C}
-           -> a ≡ b -> Category.Morph C a c -> Category.Morph C b c
-substMorph {C = C} p u = subst (λ z → Category.Morph C z _) p u
+module _ {l} {l'} {C : Category {l} {l'}} {a b c : Category.Obj C} where
+  open Category
+
+  -- record MorphOver (C : Category {l} {l'}) (a b c : Obj C) : Set (l ⊔ l') where
+  --   field
+  --     pp : a ≡ b
+  --     mm : Morph C a c
+  --   getmm : Morph C b c
+  --   getmm = subst (λ z → Morph C z _) pp mm
+
+  substMorph : -- {C : Category {l} {l'}} {a b c : Category.Obj C}
+              a ≡ b -> Morph C a c -> Morph C b c
+  substMorph p u = subst (λ z → Morph C z _) p u
+
+  data _≡[_]_ (u : Morph C a c) (p : a ≡ b) (v : Morph C b c) : Set l' where
+    PathOver : substMorph p u ≡ v -> u ≡[ p ] v
+
+  -- substMorph≡ : ∀{l l'} {C : Category {l} {l'}} {a b c : Obj C}
+  --             -> (p : a ≡ b) (f : Morph C a c) -> substMorph {C = C} p (id C a) ≡ {!!}
+  -- substMorph≡ = {!!}
 
 module _ {l} {l'} where
   open Groupoid

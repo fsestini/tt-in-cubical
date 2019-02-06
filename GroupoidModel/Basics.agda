@@ -75,25 +75,25 @@ module _ {l} where
   grpd (Γ ,, A) f = {!!}
   strct (Γ ,, A) = {!!}
 
---   module _ {Γ : Groupoid {l}} {A : Ty {l} {l'} Γ} where
+-- module _ {l} {Γ : Groupoid {l}} {A : Ty {l} Γ} where
 
---     open Functor
+--   open Functor
 
---     p : cat (Γ ,, A) ⟶ cat Γ
---     (p ₀) (γ , x) = γ
---     (p ₁) (p , q) = p
---     fid p = {!!}
---     f∘ p = {!!}
+  -- p : cat (Γ ,, A) ⟶ cat Γ
+  -- (p ₀) (γ , x) = γ
+  -- (p ₁) (p , q) = p
+  -- fid p = {!!}
+  -- f∘ p = {!!}
 
---   module _ {Γ Δ : Groupoid {l}} {A : Ty {l} {l'} Δ} where
+module _ {l} (Γ : Groupoid {l}) {Δ : Groupoid {l}} {A : Ty {l} Δ} where
 
---     π₁ : cat Γ ⟶ cat (Δ ,, A) → cat Γ ⟶ cat Δ
---     π₁ σ =
---       MkFunct (λ x → fst ((σ ₀) x))
---               (λ f → fst ((σ ₁) f))
---               (λ x → cong fst (fid σ x))
---               λ f g → cong fst (f∘ σ f g)
---       where open Functor ; open Category
+  π₁ : cat Γ ⟶ cat (Δ ,, A) → cat Γ ⟶ cat Δ
+  π₁ σ =
+    MkFunct (λ x → fst ((σ ₀) x))
+            (λ f → fst ((σ ₁) f))
+            (λ x → cong fst (fid σ x))
+            (λ f g → cong fst (f∘ σ f g))
+    where open Functor ; open Category
 
 --   module _ (Γ : Groupoid {l}) (A : Ty {l} {l'} Γ) (a : Tm Γ A) where
 
@@ -130,21 +130,34 @@ module _ {l} where
 --   -- _[_] : ∀{Γ Θ} → Ty Θ → Tms Γ Θ → Ty Γ
 --   -- A [ σ ] = compFun _ _ _ σ A
 
---   -- _[_]' : ∀{Γ Δ} {A : Ty Δ} → Tm Δ A → (σ : Tms Γ Δ)
---   --       → Tm Γ (compFun _ _ _ σ A)
---   -- M [ f ]' =
---   --   MkTm (λ γ → (M ₀') ((f ₀) γ))
---   --            (λ p → (M ₁') ((f ₁) p))
---   --            {!!} {!!}
---   --   where open Category ; open Functor ; open Tm
+open import Function using (flip)
 
---   -- π₂ : ∀{Γ Δ} {A : Ty Δ} → (σ : Tms Γ (Δ ,, A)) → Tm Γ (_[_] {Γ} {Δ} A (π₁ {cat Γ} {Δ} {A} σ))
---   -- π₂ {Δ} {Γ} {A} σ = subst (Tm Δ) (Functor-≡ _ _ _ _ (Σ-≡ ((funExt _ (λ x → refl)) , transpRefl _ _))) aux
---   --   where
---   --     open Category
---   --     p : Tms (Γ ,, A) Γ
---   --     p = MkFunct fst fst (λ _ → refl) (λ f g → refl)
---   --     v : Tm (Γ ,, A) (compFun _ _ _ p A)
---   --     v = MkTm snd snd (λ γ → {!!}) {!!} -- snd snd {!!} {!!}
---   --     aux : Tm Δ _
---   --     aux = v [ σ ]'
+_[_] : ∀{l}{Γ Δ : Groupoid {l}} -> Ty Γ → cat Δ ⟶ cat Γ -> Ty Δ
+_[_] = flip compFun
+
+module _ {l} {Γ Δ : Groupoid {l}} {A : Ty Δ} where
+  
+  open Tm
+  open Functor
+  open Category
+
+  _[_]' : Tm Δ A -> (σ : cat Γ ⟶ cat Δ) -> Tm Γ (compFun σ A)
+  (M [ f ]' ₀') γ = (M ₀') (f ₀ $ γ)
+  (M [ f ]' ₁') p = (M ₁') (f ₁ $ p)
+  fid' (M [ f ]') γ = {!!} · fid' M (f ₀ $ γ)
+    where
+      aux1 = fmp0-id Γ (compFun f A) ((M ₀') ((f ₀) γ))
+      aux2 = fmp0-id Δ A ((M ₀') ((f ₀) γ))
+  f∘'  (M [ f ]') p p' = {!!}
+
+  π₂ : (σ : cat Γ ⟶ cat (Δ ,, A)) → Tm Γ (compFun (π₁ {l} Γ {Δ} {A} σ) A)
+  (π₂ σ ₀') γ = snd ((σ ₀) γ)
+  (π₂ σ ₁') p = snd ((σ ₁) p)
+  fid' (π₂ σ) γ = {!!}
+  f∘' (π₂ σ) p q = {!!}
+  
+  _,s_ : (σ : GrpdFunctor Γ Δ) → Tm Γ (compFun σ A) → GrpdFunctor Γ (Δ ,, A)
+  ((σ ,s t) ₀) γ = (σ ₀ $ γ) , (t ₀' $ γ)
+  ((σ ,s t) ₁) p = (σ ₁ $ p) , (t ₁' $ p)
+  fid (σ ,s t) γ = Σ-≡ (fid σ γ , {!!})
+  f∘  (σ ,s t) f g = Σ-≡ (f∘ σ f g , {!!})

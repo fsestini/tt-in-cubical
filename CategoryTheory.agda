@@ -44,6 +44,19 @@ record Category {l} {l'} : Set (lsuc (l ⊔ l')) where
     ∘id   : ∀{i j} (f : Morph i j) → f ∘ id i ≡ f
     ∘∘    : ∀{i j k l} (f : Morph k l) (g : Morph j k) (h : Morph i j)
           → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
+
+⊤-cat : ∀{l l'} -> Category {l} {l'}
+⊤-cat = record
+          { Obj = ⊤
+          ; Morph = λ _ _ → ⊤
+          ; id = λ _ → tt
+          ; _∘_ = λ _ _ → tt
+          ; hom-set = ⊤-is-set
+          ; id∘ = λ _ → refl
+          ; ∘id = λ _ → refl
+          ; ∘∘ = λ _ _ _ → refl
+          }
+
 module _ {l} (A : Set l) (aset : isSet A) where
 
   open Category
