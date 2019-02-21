@@ -30,7 +30,7 @@ id GpdCat G = MkFunctor' (IdFunctor (cat G)) , {!!}
 _∘_ GpdCat (MkFunctor' F , isoF) (MkFunctor' G , isoG) =
   MkFunctor' (compFun G F) , {!!}
 hom-set GpdCat (MkFunctor' F , isoF) (MkFunctor' G , isoG) p q = {!!}
-id∘ GpdCat (MkFunctor' f , isoF) = Σ-prop-≡ (λ F → {!!}) (ap MkFunctor' (Functor-≡' _ _ _ _ (FunctorEq-refl _ _ f)))
+id∘ GpdCat (MkFunctor' f , isoF) = Σ-prop-≡ (λ F → {!!}) (ap MkFunctor' (Functor-≡ (FunctorEq-refl f)))
 ∘id GpdCat f = {!!}
 ∘∘ GpdCat f g h = {!!}
 

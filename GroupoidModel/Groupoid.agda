@@ -96,9 +96,9 @@ module _ {l} where
            ; Morph = GrpdFunctor
            ; id = λ G → IdFunctor (cat G)
            ; _∘_ = λ F G → compFun G F
-           ; id∘ = λ {I} {J} F → Functor-≡' _ _ _ _ (FunctorEq-refl _ _ F)
-           ; ∘id = λ {I} {J} F → Functor-≡' _ _ _ _ (FunctorEq-refl _ _ F)
-           ; ∘∘ = λ {I} {J} {K} {L} F G H → Functor-≡' _ _ _ _ (FunctorEq-refl _ _ (compFun H (compFun G F)))
+           ; id∘ = λ {I} {J} F → Functor-≡ (FunctorEq-refl F)
+           ; ∘id = λ {I} {J} F → Functor-≡ (FunctorEq-refl F)
+           ; ∘∘ = λ {I} {J} {K} {L} F G H → Functor-≡ (FunctorEq-refl (compFun H (compFun G F)))
            ; hom-set = λ {G} {H} → functIsSet (cat G) (cat H) (strct G)
            }
 
@@ -115,8 +115,8 @@ module _ {l} where
             (λ x → Wrap-≡ (fid F (unWrap x)))
             (λ f g → Wrap-≡ (f∘ F (unWrap f) (unWrap g)))
   fid gliftFunctor G =
-    Functor-≡' _ _ _ _ (record { eq0 = λ x → refl
-                               ; eq1 = λ f → transpRefl _ _ · transpRefl _ _ })
+    Functor-≡ (record { eq0 = λ x → refl
+                      ; eq1 = λ f → transpRefl _ _ · transpRefl _ _ })
   f∘  gliftFunctor = {!!}
 
 module _ {l} {l'} {C : Category {l} {l'}} {a b c : Category.Obj C} where

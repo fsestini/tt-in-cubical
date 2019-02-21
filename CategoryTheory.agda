@@ -1,7 +1,7 @@
 module CategoryTheory where
 
--- open import Cubical.Core.Glue
--- open import Cubical.Basics.Equiv
+open import Cubical.Core.Glue
+open import Cubical.Basics.Equiv
 open import Utils
 open import Function using (_$_ ; const)
 open import Agda.Primitive
@@ -139,7 +139,6 @@ module _ {l} {l'} (C : Category {l} {l'}) where
           ; hom-set = hom-set
           }
 
-
 module _ {l} (C : Category {l} {l}) where
 
   open Category C
@@ -189,61 +188,66 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
     ObjPart = Obj C → Obj D
 
     MorphPart : ObjPart → Set _
-    MorphPart _₀ = ∀{a b} → Morph C a b → Morph D (_₀ a) (_₀ b)
+    MorphPart _₀ = ∀ a b → Morph C a b → Morph D (_₀ a) (_₀ b)
 
-    record FunctorEq (F0 : ObjPart) (F1 : MorphPart F0) (G0 : ObjPart) (G1 : MorphPart G0) : Set (l ⊔ l' ⊔ l'' ⊔ l''') where
+    ObjPartEq : ObjPart -> ObjPart -> Set _
+    ObjPartEq F0 G0 = (x : _) -> F0 x ≡ G0 x
+    
+    MorphPartEq : {F0 G0 : ObjPart} -> ObjPartEq F0 G0 -> MorphPart F0 -> MorphPart G0 -> Set _
+    MorphPartEq {F0} {G0} eq0 F1 G1 =
+      ∀{a b} (f : Morph C a b)
+            -> _≡_ {A = Morph D (G0 a) (G0 b)}
+                   (subst2 (Morph D) (eq0 a) (eq0 b) (F1 a b f)) (G1 a b f)
+
+    funeq-lemma : {F0 G0 : ObjPart} (p : F0 ≡ G0)
+        -> {F1 : MorphPart F0} {G1 : MorphPart G0}
+        -> MorphPartEq (λ x → ap (_$ x) p) F1 G1
+        -> _≡_ {A = MorphPart G0} (subst MorphPart p F1) G1
+    funeq-lemma {F0} =
+      J (λ G0' p' -> {F1 : MorphPart F0} {G1 : MorphPart G0'}
+                  -> MorphPartEq (λ x → ap (_$ x) p') F1 G1
+                  -> _≡_ {A = MorphPart G0'} (subst MorphPart p' F1) G1)
+        λ {F1} {G1} h → transpRefl (MorphPart F0) F1 ·
+          aux (λ f → sym (transpRefl _ _ · transpRefl _ _) · h f)
+      where
+        aux : {F0 : ObjPart} {F1 F1' : MorphPart F0}
+            -> ((∀{a b} (f : Morph C a b) -> F1 a b f ≡ F1' a b f))
+            -> _≡_ {A = MorphPart F0} F1 F1'
+        aux h = funExt _ (λ _ → funExt _ (λ _ → funExt _ (λ f → h f)))
+
+    record FunctorEq (F0 : ObjPart) (F1 : MorphPart F0)
+                     (G0 : ObjPart) (G1 : MorphPart G0) : Set (l ⊔ l' ⊔ l'' ⊔ l''') where
       field
         eq0 : (x : _) -> F0 x ≡ G0 x
-        eq1 : ∀{a b} (f : Morph C a b)
-            -> _≡_ {A = Morph D (G0 a) (G0 b)} (subst2 (Morph D) (eq0 a) (eq0 b) (F1 f)) (G1 f)
+        eq1 : MorphPartEq eq0 F1 G1 -- ∀{a b} (f : Morph C a b)
+            -- -> _≡_ {A = Morph D (G0 a) (G0 b)}
+            --        (subst2 (Morph D) (eq0 a) (eq0 b) (F1 f)) (G1 f)
         
-    -- Functoriality : (o : ObjPart) -> MorphPart o -> Set _
-    -- Functoriality F₀ F₁ =
-    --     (∀ x → F₁ (id C x) ≡ id D (F₀ x))
-    --   × (∀{i j k} (f : Morph C j k) (g : Morph C i j)
-    --        → F₁ (_∘_ C f g) ≡ _∘_ D (F₁ f) (F₁ g))
+    Functoriality : (o : ObjPart) -> MorphPart o -> Set _
+    Functoriality F₀ F₁ =
+        (∀ x → F₁ _ _ (id C x) ≡ id D (F₀ x))
+      × (∀{i j k} (f : Morph C j k) (g : Morph C i j)
+           → F₁ _ _ (_∘_ C f g) ≡ _∘_ D (F₁ _ _ f) (F₁ _ _ g))
 
-    -- functIsProp : (o : ObjPart) -> (m : MorphPart o) -> isProp (Functoriality o m)
-    -- functIsProp F₀ F₁ = ×-prop (Π-prop (λ x → hom-set D _ _))
-    --   λ f g → funExt' _ $ λ i → funExt' _ $ λ j → funExt' _ $ λ k → funExt _ $ λ x →
-    --     funExt _ (λ y → hom-set D _ _ (f x y) (g x y))
+    functIsProp : (o : ObjPart) -> (m : MorphPart o) -> isProp (Functoriality o m)
+    functIsProp F₀ F₁ = ×-prop (Π-prop (λ x → hom-set D _ _))
+      λ f g → funExt' _ $ λ i → funExt' _ $ λ j → funExt' _ $ λ k → funExt _ $ λ x →
+        funExt _ (λ y → hom-set D _ _ (f x y) (g x y))
 
-    -- funct≃Σ : Functor ≃ Σ (Σ ObjPart MorphPart) λ { (o , m) → Functoriality o m }
-    -- funct≃Σ =
-    --   isoToEquiv
-    --     (λ { (MkFunct F₀ F₁ x y) → (F₀ , F₁) , (x , y) })
-    --     (λ { ((F₀ , F₁) , (x , y)) → MkFunct F₀ F₁ x y })
-    --     (λ { ((F₀ , F₁) , (x , y)) → refl })
-    --     (λ { (MkFunct _₀ _₁ fid₁ f∘₁) → refl })
+    funct≃Σ : Functor ≃ Σ (Σ ObjPart MorphPart) λ { (o , m) → Functoriality o m }
+    funct≃Σ =
+      isoToEquiv
+        (λ { (MkFunct F₀ F₁ x y) → (F₀ , λ a b -> F₁) , (x , y) })
+        (λ { ((F₀ , F₁) , (x , y)) → MkFunct F₀ (F₁ _ _) x y })
+        (λ { ((F₀ , F₁) , (x , y)) → refl })
+        (λ { (MkFunct _₀ _₁ fid₁ f∘₁) → refl })
 
-    -- Functor-≡ : (F G : Functor)
-    --           -> fst (fst funct≃Σ F) ≡ fst (fst funct≃Σ G)
-    --           -> F ≡ G
-    -- Functor-≡ F G h = ≡-on-≃ funct≃Σ (Σ-prop-≡ (λ { (x , y) → functIsProp x y}) h)
+    postulate -- postulated because too slow
+      Functor-≡' : (F G : Functor)
+                 -> fst (fst funct≃Σ F) ≡ fst (fst funct≃Σ G)
+                 -> F ≡ G
+    -- Functor-≡' F G h = ≡-on-≃ funct≃Σ (Σ-prop-≡ (λ { (x , y) → functIsProp x y}) h)
   
-
-    module _ where
-      open Functor
-      open FunctorEq
-
-      postulate
-        Functor-≡' : (F G : Functor)
-                   -> FunctorEq (F ₀) (F ₁) (G ₀) (G ₁)
-                   -> F ≡ G
-      -- Functor-≡' F G eq = Functor-≡ F G (Σ-≡ (funExt _ (eq0 eq) , {!!}))
-
-      FunctorEq-refl : (F : Functor) -> FunctorEq (F ₀) (F ₁) (F ₀) (F ₁)
-      FunctorEq-refl F =
-        record { eq0 = λ x → refl
-               ; eq1 = λ f → transpRefl _ _ · transpRefl _ ((F ₁) f) }
-
-      Functor-≡-prop : (F G : Functor)
-                     -> ((a b : Obj D) → isProp (Morph D a b))
-                     -> F ₀ ≡ G ₀
-                     -> F ≡ G
-      Functor-≡-prop F G h p = Functor-≡' F G
-        (record { eq0 = λ x → ap (_$ x) p ; eq1 = λ f → h _ _ _ _ })
-
     postulate
       functIsSet : isStrictCategory C -> isSet Functor
     -- functIsSet k =
@@ -296,6 +300,31 @@ module _ {l l' l'' l'''} (C : Category {l} {l'}) (D : Category {l''} {l'''}) whe
             ; hom-set = λ {F} {G} → Σ-subset (Π-set λ x → hom-set) (natrltyIsProp F G)
             }
     where open Category D ; open Functor
+
+module _ {l l' l'' l'''} {C : Category {l} {l'}} {D : Category {l''} {l'''}} where
+
+  open Functor
+  open Category
+  open FunctorEq
+
+  Functor-≡ : {F G : Functor C D}
+            -> FunctorEq C D (F ₀) (λ _ _ -> F ₁) (G ₀) (λ _ _ -> G ₁)
+            -> F ≡ G
+  Functor-≡ {F} {G} eq =
+    Functor-≡' _ _ _ _ (Σ-≡ (funExt _ (eq0 eq) ,
+      funeq-lemma C D {F ₀} {G ₀} (funExt _ (eq0 eq)) (eq1 eq)))
+
+  FunctorEq-refl : (F : Functor C D) -> FunctorEq C D (F ₀) (λ _ _ -> F ₁) (F ₀) (λ _ _ -> F ₁)
+  FunctorEq-refl F =
+    record { eq0 = λ x → refl
+           ; eq1 = λ f → transpRefl _ _ · transpRefl _ ((F ₁) f) }
+
+  Functor-≡-prop : (F G : Functor C D)
+                 -> ((a b : Obj D) → isProp (Morph D a b))
+                 -> F ₀ ≡ G ₀
+                 -> F ≡ G
+  Functor-≡-prop F G h p = Functor-≡ -- F G
+    (record { eq0 = λ x → ap (_$ x) p ; eq1 = λ f → h _ _ _ _ })
 
 module _ {la la' lb lb' lc lc' ld ld'}
   {A : Category {la} {la'}}
@@ -352,32 +381,32 @@ module _ {lc} {lc'} {ld} {ld'} {le} {le'}
   fid (compFun F G) x = cong (G ₁) (fid F x) · fid G ((F ₀) x)
   f∘ (compFun F G) f g = ap (G ₁) (f∘ F f g) · f∘ G (F ₁ $ f) (F ₁ $ g)
 
--- module _ {l l' l''} (C : Category {l} {l'}) where
+module _ {l l' l''} (C : Category {l} {l'}) where
 
---   open Category C
---   open Functor
+  open Category C
+  open Functor
 
---   PSh : Set _
---   PSh = Functor (C ᵒᵖ) (Sets {l''})
+  PSh : Set _
+  PSh = Functor (C ᵒᵖ) (Sets {l''})
 
---   PShCat : Category
---   PShCat = [ C ᵒᵖ , Sets {l''} ]
+  PShCat : Category
+  PShCat = [ C ᵒᵖ , Sets {l''} ]
 
---   open import Function using (_$_)
+  -- open import Function using (_$_)
 
---   module Elements (cStrictCat : isStrictCategory C) where
+  -- module Elements (cStrictCat : isStrictCategory C) where
 
---     ∫ : PSh → Category
---     Obj (∫ P) = Σ Obj (λ A → fst ((P ₀) A)) -- Σ Obj (P ₀)
---     Morph (∫ P) (J , γ') (I , γ) = Σ (Morph J I) (λ u → (P ₁) u γ ≡ γ')
---     _∘_ (∫ P) {I} {J} {K} (u , p) (u' , p') =
---       (u ∘ u') , cong (_$ snd K) (f∘ P u' u) · cong ((P ₁) u') p · p'
+  --   ∫ : PSh → Category
+  --   Obj (∫ P) = Σ Obj (λ A → fst ((P ₀) A))
+  --   Morph (∫ P) (J , γ') (I , γ) = Σ (Morph J I) (λ u → (P ₁) u γ ≡ γ')
+  --   _∘_ (∫ P) {I} {J} {K} (u , p) (u' , p') =
+  --     (u ∘ u') , cong (_$ snd K) (f∘ P u' u) · cong ((P ₁) u') p · p'
 
---     id (∫ P) x = id (fst x) , cong (_$ snd x) (fid P (fst x))
---     ∘∘ (∫ P) f g h = Σ-prop-≡ (λ x → snd ((P ₀) (fst _)) _ _) (∘∘ (fst f) (fst g) (fst h))
---     id∘ (∫ P) = λ f → Σ-prop-≡ {!!} (id∘ (fst f))
---     ∘id (∫ P) = λ f → Σ-prop-≡ {!!} (∘id (fst f))
---     hom-set (∫ P) {a1 , a2} {b1 , b2} = Σ-set hom-set λ u → {!!}
+  --   id (∫ P) x = id (fst x) , cong (_$ snd x) (fid P (fst x))
+  --   ∘∘ (∫ P) f g h = Σ-prop-≡ (λ x → snd ((P ₀) (fst _)) _ _) (∘∘ (fst f) (fst g) (fst h))
+  --   id∘ (∫ P) = λ f → Σ-prop-≡ {!!} (id∘ (fst f))
+  --   ∘id (∫ P) = λ f → Σ-prop-≡ {!!} (∘id (fst f))
+  --   hom-set (∫ P) {a1 , a2} {b1 , b2} = Σ-set hom-set λ u → {!!}
 
 --     uhm : {P Q : PSh}
 --         → Functor ((∫ Q) ᵒᵖ) (Sets {l''}) → NatTrans (C ᵒᵖ) (Sets {l''}) P Q
@@ -409,16 +438,29 @@ module _ where
   bang terminalSets = λ _ _ → tt
   uniq terminalSets = λ x f → refl
 
--- module _ {l} {l'} {l''} (C : Category {l} {l'}) where
+module CatCategory {l} (strct : (C : Category {l} {l}) -> isStrictCategory C) where
 
---   open Category
---   open HasTerminalObj
+  Cat : Category
+  Cat = record
+          { Obj = Category {l} {l}
+          ; Morph = Functor
+          ; id = IdFunctor
+          ; _∘_ = λ F G → compFun G F
+          ; hom-set = λ {C} {D} -> functIsSet _ _ (strct C)
+          ; id∘ = λ {C} {D} F → Functor-≡ (FunctorEq-refl F)
+          ; ∘id = λ {C} {D} F → Functor-≡ (FunctorEq-refl F)
+          ; ∘∘ = λ F G H → Functor-≡ (FunctorEq-refl (compFun H (compFun G F)))
+          }
 
---   PShTerm : HasTerminalObj (PShCat {l'' = l''} C)
---   one PShTerm =
---     record { _₀ = λ _ → one terminalSets
---            ; _₁ = λ _ x → x
---            ; fid = const refl
---            ; f∘ = λ _ _ → refl }
---   bang PShTerm _ = (λ _ _ → tt) , λ _ → refl
---   uniq PShTerm _ _ = refl
+  open Functor
+  open Category
+
+  op-functor : Functor Cat Cat
+  (op-functor ₀) C = C ᵒᵖ
+  (op-functor ₁) {C} {D} F = MkFunct (F ₀) (F ₁) (fid F) λ f g → f∘ F g f
+  fid op-functor C =
+    Functor-≡ (record { eq0 = λ _ → refl
+                      ; eq1 = λ _ → transpRefl _ _ · transpRefl _ _ })
+  f∘ op-functor f g =
+    Functor-≡ (record { eq0 = λ _ → refl
+                      ; eq1 = λ _ → transpRefl _ _ · transpRefl _ _ })

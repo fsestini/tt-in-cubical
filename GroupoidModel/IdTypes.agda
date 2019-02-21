@@ -32,11 +32,11 @@ module _ {l} (A : Groupoid {l}) where
               (ap (λ a → p2 ∘ (a ∘ fst (grpd A p1))))
               (λ x → hom-set _ _ _ _) λ f g → hom-set _ _ _ _
     fid Id (a1 , a2) =
-      Functor-≡-prop _ _ _ _ hom-set
+      Functor-≡-prop _ _ hom-set
         (funExt _ λ q → ap (λ z → id a2 ∘ (q ∘ z)) (sym-gid A a1)
                       · id∘ (q ∘ id a1) · ∘id q)
     f∘ Id (f , g) (f' , g') =
-      Functor-≡-prop _ _ _ _ hom-set (funExt _ goal)
+      Functor-≡-prop _ _ hom-set (funExt _ goal)
       where
         subgoal1 : ((fst (grpd A f') ∘ fst (grpd A f)) ∘ (f ∘ f')) ≡ id _
         subgoal1 = {!!}

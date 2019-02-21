@@ -7,9 +7,16 @@ open import Cubical.Core.Prelude
 open import Cubical.Core.Glue -- Basics.Everything
 open import Cubical.Basics.Everything
 
--- uncurry : ∀{l l' l''} {A : Set l} {B : Set l'} {C : Set l''}
---         -> (A -> B -> C) -> A × B -> C
--- uncurry f (x , y) = f x y
+-- module _ {l l'} {A : Set l} {B C : A -> Set l'} {x y : A}
+--        (p : x ≡ y) (f : (x : A) -> B x -> C x)
+--        (u : B y) (v : B x) where
+
+--   uhm : f _ (subst B (sym p) u) ≡ subst C {!!} (f _ v)
+
+module _ {l} {l'} {A : Set l} (aset : isSet A) where
+
+  K : (M : A) (C : M ≡ M -> Set l') -> C refl -> (loop : M ≡ M) -> C loop
+  K M C h p = subst C (aset _ _ _ _) h
 
 subst2 : {ℓ ℓ' l : Level} {A : Set ℓ} {B : Set l} (C : A -> B → Set ℓ')
       {a a' : A} {b b' : B} →

@@ -10,7 +10,7 @@ open import Cubical.Core.Prelude
 open import Model
 open import Data.Unit
 open import Data.Product
-open import Category
+open import CategoryTheory
 open import IrrelevantProp
 open import Agda.Primitive
 
@@ -26,7 +26,7 @@ module _ {l l'} (C : Category {l} {l'}) where
   open Functor
   open Σ'
 
-  PShCon = PSh {l'' = l ⊔ l'} C
+  PShC = PSh {l'' = l ⊔ l'} C
 
   PShTy : PShCon → Set _
   PShTy Γ = PSh {l'' = l ⊔ l'} (∫ C Γ)
